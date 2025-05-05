@@ -13,7 +13,7 @@ from src.dataset import PushTImageDataset
 def train_diff_model(nets, 
                      dataset: PushTImageDataset, 
                      logdir: str,
-                     num_epochs = 200,
+                     num_epochs = 100,
                      batch_size = 64,
                      num_workers = 4,
                      device = 'cuda',

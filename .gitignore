@@ -1,6 +1,7 @@
 # project specific 
 logs/
 .ipynb_checkpoints/
+vis.mp4
 
 
 # Byte-compiled / optimized / DLL files

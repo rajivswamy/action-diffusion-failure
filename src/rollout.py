@@ -17,10 +17,10 @@ def rollout(ema_nets,
             device='cuda', 
             num_diffusion_iters=100,
             action_dim=2,
-            trajectory_sample_size=1):
+            trajectory_sample_size=128):
     # assume the env is already seeded
     # get first observation
-    obs, _ = env.reset()
+    obs, info = env.reset()
 
     # init noise scheduler
     noise_scheduler = DDPMScheduler(
@@ -43,9 +43,27 @@ def rollout(ema_nets,
     done = False
     step_idx = 0
 
+    # data logs, ideally matched up with each time step
+    actions = []
+    sampled_trajectories = [] # may be None if not generated for time step t
+    agent_positions     = [obs['agent_pos']]
+    agent_velocities   = [info['vel_agent']]
+    block_poses      = [info['block_pose']]
+    goal_poses      = [info['goal_pose']]
+    step_image_features = []
+
+    # ---------- time-step 0 image features ----------
+    images_init   = np.stack([x['image']    for x in obs_deque])       # (obs_horizon, H, W, C)
+    img_tensor0   = torch.from_numpy(images_init).to(device, torch.float32)
+    with torch.no_grad():
+        feat0 = ema_nets['vision_encoder'](img_tensor0)               # (obs_horizon, feat_dim)
+    step_image_features.append(feat0.cpu().numpy())
+    # -------------------------------------------------
+
     with tqdm(total=max_steps, desc="Eval PushTImageEnv") as pbar:
         while not done:
-            B = 1
+            # controls the batch size of trajectories sampled
+            B = trajectory_sample_size
             # stack the last obs_horizon number of observations
             images = np.stack([x['image'] for x in obs_deque])
             agent_poses = np.stack([x['agent_pos'] for x in obs_deque])
@@ -72,6 +90,7 @@ def rollout(ema_nets,
 
                 # reshape observation to (B,obs_horizon*obs_dim)
                 obs_cond = obs_features.unsqueeze(0).flatten(start_dim=1)
+                obs_cond = obs_cond.expand(B, -1)  # (B, obs_horizon * obs_dim)
 
                 # initialize action from Guassian noise
                 noisy_action = torch.randn(
@@ -96,28 +115,48 @@ def rollout(ema_nets,
                         sample=naction
                     ).prev_sample
 
-            # unnormalize action
-            naction = naction.detach().to('cpu').numpy()
-            # (B, pred_horizon, action_dim)
-            naction = naction[0]
-            action_pred = unnormalize_data(naction, stats=stats['action'])
+            # unnormalize & slice to the first action_horizon
+            naction_np    = naction.cpu().numpy()  # (B, pred_horizon, action_dim)
+            full_batch    = unnormalize_data(naction_np, stats=stats['action'])
+            start, end    = obs_horizon - 1, (obs_horizon - 1) + action_horizon
+            action_batch  = full_batch[:, start:end, :]     # (B,action_horizon,action_dim)
 
-            # only take action_horizon number of actions
-            start = obs_horizon - 1
-            end = start + action_horizon
-            action = action_pred[start:end,:]
+            # pick one trajectory to execute
+            idx               = np.random.randint(0, B) # randomly sampled
+            executed_traj     = action_batch[idx]           # (8,2)
             # (action_horizon, action_dim)
 
             # execute action_horizon number of steps
             # without replanning
-            for i in range(len(action)):
+            for i in range(len(executed_traj)):
+                if i == 0:
+                    sampled_trajectories.append(action_batch)
+                else:
+                    sampled_trajectories.append(None)
+
+                action = executed_traj[i]
+
+                actions.append(action)
                 # stepping env
-                obs, reward, done, _, info = env.step(action[i])
+                obs, reward, done, _, info = env.step(action)
                 # save observations
                 obs_deque.append(obs)
                 # and reward/vis
                 rewards.append(reward)
                 imgs.append(env.render(mode='rgb_array'))
+
+                # log further relevant data
+                agent_positions.append(obs['agent_pos'])
+                agent_velocities.append(info['vel_agent'])
+                block_poses.append(info['block_pose'])
+                goal_poses.append(info['goal_pose'])
+
+                # log image features for the current time step
+                img_stack   = np.stack([x['image'] for x in obs_deque])
+                img_tensor  = torch.from_numpy(img_stack).to(device, torch.float32)
+                with torch.no_grad():
+                    feat_step = ema_nets['vision_encoder'](img_tensor)
+                step_image_features.append(feat_step.cpu().numpy())
 
                 # update progress bar
                 step_idx += 1
@@ -128,15 +167,19 @@ def rollout(ema_nets,
                 if done:
                     break
 
-    # print out the maximum target coverage
-    print('Score: ', max(rewards))
-    timesteps = np.arange(len(imgs))
-    # visualize
+    timesteps = list(range(len(actions)))
+
     data = {
         'timesteps': timesteps,
         'images': imgs,
         'rewards': rewards,
+        'sampled_trajectories': sampled_trajectories,
+        'actions': actions,
+        'agent_positions': agent_positions,
+        'agent_velocities': agent_velocities,
+        'block_poses': block_poses,
+        'goal_poses': goal_poses,
+        'step_image_features': step_image_features,
     }
 
     return data
-    

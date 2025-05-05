@@ -47,17 +47,14 @@ def get_action_diffusion_model(
     return nets
 
 
-def load_checkpoint(model: nn.Module, checkpoint_path: str):
+def load_checkpoint(model: nn.Module, checkpoint_path: str, device = "cuda"):
     """
     Load the model state from a checkpoint file.
     
     :param model: The model to load the state into.
     :param checkpoint_path: Path to the checkpoint file.
     """
-    if not torch.cuda.is_available():
-        checkpoint = torch.load(checkpoint_path, map_location='cpu')
-    else:
-        checkpoint = torch.load(checkpoint_path)
+    checkpoint = torch.load(checkpoint_path, map_location=device)
 
     model.load_state_dict(checkpoint['model_state_dict'])
     print(f"Loaded model from {checkpoint_path}")
