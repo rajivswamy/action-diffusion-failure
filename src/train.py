@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import torch
 import torch.nn as nn
@@ -13,13 +14,14 @@ from src.dataset import PushTImageDataset
 def train_diff_model(nets, 
                      dataset: PushTImageDataset, 
                      logdir: str,
-                     save_name: str = 'model.pth',
-                     num_epochs = 100,
+                     save_name: str = 'model',
+                     num_epochs = 2000,
                      batch_size = 64,
                      num_workers = 4,
                      device = 'cuda',
                      num_diffusion_iters = 100,
                      obs_horizon = 2,
+                     checkpoint_every = 200
                      ):
     
     # make log directory if it does not exist
@@ -136,16 +138,27 @@ def train_diff_model(nets,
                     tepoch.set_postfix(loss=loss_cpu)
             tglobal.set_postfix(loss=np.mean(epoch_loss))
 
+            # save EMA params of model every checkpoint_every epochs
+            if (epoch_idx + 1) % checkpoint_every == 0:
+                # deep‐copy nets so we don’t overwrite your “live” training model
+                ema_nets_cp = copy.deepcopy(nets)
+                # copy EMA weights into that copy
+                ema.copy_to(ema_nets_cp.parameters())
+                file_name=f"checkpoint_ema_epoch_{epoch_idx+1}.pth"
+                torch.save({'model_state_dict': ema_nets_cp.state_dict()}, 
+                    file_name)
+                
+
     # Weights of the EMA model
     # is used for inference
     ema_nets = nets
     ema.copy_to(ema_nets.parameters())
 
-    save_path = os.path.join(logdir, save_name)
+    final_path = os.path.join(logdir, f"{save_name}_ema_epoch_{num_epochs}.pth")
 
     # save loss data and model to the logdir
     torch.save({'model_state_dict': ema_nets.state_dict()}, 
-               save_path)
+               final_path)
     np.save(os.path.join(logdir, 'loss.npy'), np.array(epoch_loss))
 
     print(f"Training finished. Model saved to {logdir}/model.pth")

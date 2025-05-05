@@ -6,7 +6,6 @@ from src.policy import get_action_diffusion_model
 from src.train import train_diff_model
 
 import os
-import numpy as np
 
 dataset_path = 'demo/pusht_cchi_v7_replay.zarr.zip'
 pred_horizon = 16
@@ -19,13 +18,14 @@ vision_feature_dim = 512
 lowdim_obs_dim = 2
 action_dim = 2
 
-num_epochs = 200
-batch_size = 64
+num_epochs = 3000
+batch_size = 256
 num_workers = 4
 num_diffusion_iters = 100
+checkpoint_every = 500
 
-logdir = "logs/train/test_default"
-model_name = "pusht_vision_200ep.pth"
+logdir = "logs/train/default_long_run"
+model_name = "action-diff"
 
 def main():
     os.makedirs(logdir, exist_ok=True)
@@ -51,7 +51,8 @@ def main():
         num_workers=num_workers,
         device=device,
         num_diffusion_iters=num_diffusion_iters,
-        obs_horizon=obs_horizon
+        obs_horizon=obs_horizon,
+        checkpoint_every=checkpoint_every
     )
 
 if __name__ == "__main__":
