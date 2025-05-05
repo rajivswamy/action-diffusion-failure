@@ -171,15 +171,15 @@ def rollout(ema_nets,
 
     data = {
         'timesteps': timesteps,
-        'images': imgs,
+        'images': imgs[:-1],
         'rewards': rewards,
         'sampled_trajectories': sampled_trajectories,
         'actions': actions,
-        'agent_positions': agent_positions,
-        'agent_velocities': agent_velocities,
-        'block_poses': block_poses,
-        'goal_poses': goal_poses,
-        'step_image_features': step_image_features,
+        'agent_positions': agent_positions[:-1],
+        'agent_velocities': agent_velocities[:-1],
+        'block_poses': block_poses[:-1],
+        'goal_poses': goal_poses[:-1],
+        'step_image_features': step_image_features[:-1],
     }
 
     return data
