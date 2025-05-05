@@ -2,7 +2,9 @@
 logs/
 .ipynb_checkpoints/
 vis.mp4
-
+demo/ema_100ep.pt
+demo/pusht_cchi_v7_replay.zarr.zip
+demo/pusht_vision_100ep.ckpt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
