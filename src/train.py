@@ -13,6 +13,7 @@ from src.dataset import PushTImageDataset
 def train_diff_model(nets, 
                      dataset: PushTImageDataset, 
                      logdir: str,
+                     save_name: str = 'model.pth',
                      num_epochs = 100,
                      batch_size = 64,
                      num_workers = 4,
@@ -140,7 +141,7 @@ def train_diff_model(nets,
     ema_nets = nets
     ema.copy_to(ema_nets.parameters())
 
-    save_path = os.path.join(logdir, 'model.pth')
+    save_path = os.path.join(logdir, save_name)
 
     # save loss data and model to the logdir
     torch.save({'model_state_dict': ema_nets.state_dict()}, 

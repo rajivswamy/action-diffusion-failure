@@ -84,7 +84,7 @@ def main():
         # save data
         df = pd.DataFrame(rollout_data)
         df.to_pickle(os.path.join(log_dir, f"{name}_{suffix}.pkl"))
-        print(f"Episode {i} finished with reward {rew}. Video saved to {video_path}.")
+        print(f"Episode {i} finished with reward {max_rew}. Video saved to {video_path}.")
 
 
 if __name__ == "__main__":
