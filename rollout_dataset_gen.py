@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+import json
 
 # data imports
 from  src.dataset import get_dataset_pusht
@@ -13,12 +14,14 @@ from src.rollout import rollout
 
 from skvideo.io import vwrite
 
+
+# Global config variables
 dataset_path = 'demo/pusht_cchi_v7_replay.zarr.zip'
 pred_horizon = 16
 obs_horizon = 2
 action_horizon = 8
 
-device = "cuda"
+device = "cuda:1"
 encoder_name = "resnet18"
 vision_feature_dim = 512
 lowdim_obs_dim = 2
@@ -29,18 +32,45 @@ batch_size = 64
 num_workers = 4
 num_diffusion_iters = 100
 
-max_steps = 200
+max_steps = 300
 trajectory_sample_size = 128
 
-num_trials = 300
+num_trials = 200
 
-log_dir = "logs/datasets/no_domain_randomization"
+log_dir = "logs/datasets/no_domain_randomization_v2"
+checkpoint_path = "checkpoint_ema_epoch_2000.pth"
 
 def main():
     
     os.makedirs(log_dir, exist_ok=True)
 
-    checkpoint_path = "demo/ema_100ep.pt"
+    assert os.path.exists(checkpoint_path), f"Checkpoint path {checkpoint_path} does not exist."
+
+    config = {
+        "dataset_path":         dataset_path,
+        "pred_horizon":         pred_horizon,
+        "obs_horizon":          obs_horizon,
+        "action_horizon":       action_horizon,
+        "device":               device,
+        "encoder_name":         encoder_name,
+        "vision_feature_dim":   vision_feature_dim,
+        "lowdim_obs_dim":       lowdim_obs_dim,
+        "action_dim":           action_dim,
+        "num_epochs":           num_epochs,
+        "batch_size":           batch_size,
+        "num_workers":          num_workers,
+        "num_diffusion_iters":  num_diffusion_iters,
+        "max_steps":            max_steps,
+        "trajectory_sample_size": trajectory_sample_size,
+        "num_trials":           num_trials,
+        "log_dir":              log_dir,
+        "checkpoint_path":      checkpoint_path
+    }
+    cfg_path = os.path.join(log_dir, "config.json")
+    with open(cfg_path, "w") as f:
+        json.dump(config, f, indent=4)
+    print(f"Wrote config to {cfg_path}")
+
 
     _, stats = get_dataset_pusht(dataset_path, pred_horizon, obs_horizon, action_horizon)
 
@@ -68,6 +98,7 @@ def main():
             stats=stats,
             max_steps=max_steps,
             obs_horizon=obs_horizon,
+            action_horizon=action_horizon,
             pred_horizon=pred_horizon,
             device=device,
             num_diffusion_iters=num_diffusion_iters,

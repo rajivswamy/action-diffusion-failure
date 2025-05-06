@@ -144,9 +144,9 @@ def train_diff_model(nets,
                 ema_nets_cp = copy.deepcopy(nets)
                 # copy EMA weights into that copy
                 ema.copy_to(ema_nets_cp.parameters())
-                file_name=f"checkpoint_ema_epoch_{epoch_idx+1}.pth"
+                path_name = os.path.join(logdir, f"checkpoint_ema_epoch_{epoch_idx+1}.pth")
                 torch.save({'model_state_dict': ema_nets_cp.state_dict()}, 
-                    file_name)
+                    path_name)
                 
 
     # Weights of the EMA model
