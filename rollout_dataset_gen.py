@@ -33,12 +33,12 @@ num_workers = 4
 num_diffusion_iters = 100
 
 max_steps = 300
-trajectory_sample_size = 128
+trajectory_sample_size = 256
 
-num_trials = 200
+num_trials = 300
 
-log_dir = "logs/datasets/no_domain_randomization_v2"
-checkpoint_path = "checkpoint_ema_epoch_2000.pth"
+log_dir = "logs/datasets/no_domain_randomization_v3"
+checkpoint_path = "demo/ema_100ep_pretrained_paper.pth"
 
 def main():
     
@@ -66,6 +66,8 @@ def main():
         "log_dir":              log_dir,
         "checkpoint_path":      checkpoint_path
     }
+
+
     cfg_path = os.path.join(log_dir, "config.json")
     with open(cfg_path, "w") as f:
         json.dump(config, f, indent=4)
@@ -89,11 +91,11 @@ def main():
 
         name = f"episode_{i}"
 
-        seed = np.random.randint(201,25536)
+        seed = np.random.randint(210,25536)
 
         env = PushTImageEnv(seed=seed)
 
-        rollout_data = rollout(ema_nets=nets,
+        rollout_data, success = rollout(ema_nets=nets,
             env=env,
             stats=stats,
             max_steps=max_steps,
@@ -105,18 +107,19 @@ def main():
             action_dim=action_dim,
             trajectory_sample_size=trajectory_sample_size)
         
-        max_rew = np.array(rollout_data['rewards']).max()
-        suffix = "success" if max_rew >= 0.999 else "failure"
+        if success:
+            print(f"Rollout {i} succeeded")
 
+        suffix = "success" if success else "failure"
+
+        imgs = sum(rollout_data["rgb"], [])
         # save video
         video_path = os.path.join(log_dir, f"{name}_{suffix}.mp4")
-        vwrite(video_path, rollout_data["images"])
+        vwrite(video_path, imgs)
 
         # save data
         df = pd.DataFrame(rollout_data)
         df.to_pickle(os.path.join(log_dir, f"{name}_{suffix}.pkl"))
-        print(f"Episode {i} finished with reward {max_rew}. Video saved to {video_path}.")
-
 
 if __name__ == "__main__":
     main()
