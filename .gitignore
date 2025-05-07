@@ -5,6 +5,7 @@ vis.mp4
 demo/ema_100ep.pt
 demo/pusht_cchi_v7_replay.zarr.zip
 demo/pusht_vision_100ep.ckpt
+demo/ema_100ep_pretrained_paper.pth
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

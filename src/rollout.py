@@ -38,27 +38,23 @@ def rollout(ema_nets,
     obs_deque = collections.deque(
         [obs] * obs_horizon, maxlen=obs_horizon)
     # save visualization and rewards
-    imgs = [env.render(mode='rgb_array')]
-    rewards = list()
+    imgs = []
+    rewards = []
     done = False
     step_idx = 0
 
     # data logs, ideally matched up with each time step
-    actions = []
-    sampled_trajectories = [] # may be None if not generated for time step t
-    agent_positions     = [obs['agent_pos']]
-    agent_velocities   = [info['vel_agent']]
-    block_poses      = [info['block_pose']]
-    goal_poses      = [info['goal_pose']]
+    timestep = [] # must be staggered by action_horizon
+    executed_action = [] # elems must be action_horizon x action_dim
+    sampled_actions = [] # elems must be samples x pred_horizon x action_dim
+    action_index = []
+    agent_positions = []
+    agent_velocities = []
+    block_poses = []
+    goal_poses = []
     step_image_features = []
 
-    # ---------- time-step 0 image features ----------
-    images_init   = np.stack([x['image']    for x in obs_deque])       # (obs_horizon, H, W, C)
-    img_tensor0   = torch.from_numpy(images_init).to(device, torch.float32)
-    with torch.no_grad():
-        feat0 = ema_nets['vision_encoder'](img_tensor0)               # (obs_horizon, feat_dim)
-    step_image_features.append(feat0.cpu().numpy())
-    # -------------------------------------------------
+    success = False
 
     with tqdm(total=max_steps, desc="Eval PushTImageEnv") as pbar:
         while not done:
@@ -84,6 +80,9 @@ def rollout(ema_nets,
                 # get image features
                 image_features = ema_nets['vision_encoder'](nimages)
                 # (2,512)
+
+                # log the image features for each replanning step
+                step_image_features.append(image_features.cpu().numpy())
 
                 # concat with low-dim observations
                 obs_features = torch.cat([image_features, nagent_poses], dim=-1)
@@ -117,46 +116,49 @@ def rollout(ema_nets,
 
             # unnormalize & slice to the first action_horizon
             naction_np    = naction.cpu().numpy()  # (B, pred_horizon, action_dim)
-            full_batch    = unnormalize_data(naction_np, stats=stats['action'])
-            start, end    = obs_horizon - 1, (obs_horizon - 1) + action_horizon
-            action_batch  = full_batch[:, start:end, :]     # (B,action_horizon,action_dim)
-
-            # pick one trajectory to execute
+            pred_batch    = unnormalize_data(naction_np, stats=stats['action'])
+            # log the sampled actions
+            sampled_actions.append(pred_batch) # (B, pred_horizon, action_dim)
+            # pick one trajectory to execute and log the sample
             idx               = np.random.randint(0, B) # randomly sampled
-            executed_traj     = action_batch[idx]           # (8,2)
-            # (action_horizon, action_dim)
+            executed_action.append(pred_batch[idx]) # (pred_horizon, action_dim)
+            # restrict view to action horizon
+            start, end    = obs_horizon - 1, (obs_horizon - 1) + action_horizon 
+            action_index.append((start, end))
+            executed_traj  = pred_batch[idx, start:end, :]     # (action_horizon,action_dim)
+
+            # log timestep
+            timestep.append(step_idx)
+
+            traj_images = []
+            traj_rewards = []
+            traj_agent_pos = []
+            traj_agent_vel = []
+            traj_block_pos = []
+            traj_goal_pos  = []
 
             # execute action_horizon number of steps
             # without replanning
             for i in range(len(executed_traj)):
-                if i == 0:
-                    sampled_trajectories.append(action_batch)
-                else:
-                    sampled_trajectories.append(None)
 
                 action = executed_traj[i]
 
-                actions.append(action)
+                # add logs
+                traj_images.append(env.render(mode='rgb_array'))
+                traj_agent_pos.append(obs['agent_pos'])
+                traj_agent_vel.append(info['vel_agent'])
+                traj_block_pos.append(info['block_pose'])
+                traj_goal_pos.append(info['goal_pose'])
+
                 # stepping env
                 obs, reward, done, _, info = env.step(action)
                 # save observations
                 obs_deque.append(obs)
                 # and reward/vis
-                rewards.append(reward)
-                imgs.append(env.render(mode='rgb_array'))
-
-                # log further relevant data
-                agent_positions.append(obs['agent_pos'])
-                agent_velocities.append(info['vel_agent'])
-                block_poses.append(info['block_pose'])
-                goal_poses.append(info['goal_pose'])
-
-                # log image features for the current time step
-                img_stack   = np.stack([x['image'] for x in obs_deque])
-                img_tensor  = torch.from_numpy(img_stack).to(device, torch.float32)
-                with torch.no_grad():
-                    feat_step = ema_nets['vision_encoder'](img_tensor)
-                step_image_features.append(feat_step.cpu().numpy())
+                traj_rewards.append(reward)
+                
+                if reward > 0.999:
+                    success = True
 
                 # update progress bar
                 step_idx += 1
@@ -167,19 +169,27 @@ def rollout(ema_nets,
                 if done:
                     break
 
-    timesteps = list(range(len(actions)))
+            # add logs 
+            imgs.append(traj_images)
+            agent_positions.append(traj_agent_pos)
+            agent_velocities.append(traj_agent_vel)
+            block_poses.append(traj_block_pos)
+            goal_poses.append(traj_goal_pos)
+            rewards.append(traj_rewards)
+
 
     data = {
-        'timesteps': timesteps,
-        'images': imgs[:-1],
-        'rewards': rewards,
-        'sampled_trajectories': sampled_trajectories,
-        'actions': actions,
-        'agent_positions': agent_positions[:-1],
-        'agent_velocities': agent_velocities[:-1],
-        'block_poses': block_poses[:-1],
-        'goal_poses': goal_poses[:-1],
-        'step_image_features': step_image_features[:-1],
+        'timestep': timestep,
+        'rgb': imgs,
+        'reward': rewards,
+        'sampled_actions': sampled_actions,
+        'executed_action': executed_action,
+        'action_index': action_index,
+        'agent_positions': agent_positions,
+        'agent_velocities': agent_velocities,
+        'block_poses': block_poses,
+        'goal_poses': goal_poses,
+        'step_image_features': step_image_features,
     }
 
-    return data
+    return data, success

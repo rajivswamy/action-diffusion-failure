@@ -384,7 +384,8 @@ class PushTEnv(gym.Env):
         self.n_contact_points = 0
 
         self.max_score = 50 * 100
-        self.success_threshold = 0.95  # 95% coverage.
+        # if coverage reaches 90% then the reward becomes 1.0 and run is considered a success
+        self.success_threshold = 0.90  # 90% coverage --> follow the sentinel paper setup
 
     def _sample_scale(self, low, high, size, aspect_limit=None):
         while True:
