@@ -132,6 +132,16 @@ class PushTEnv(gym.Env):
                     rs.randn() * 2 * np.pi - np.pi,
                 ]
             )
+            # Hard code state to get multimodal trajectory
+            # state = np.array(
+            #     [
+            #         256+40,
+            #         256-40,
+            #         256-40,
+            #         256+40,
+            #         np.pi/4,
+            #     ]
+            # )
         self._set_state(state)
 
         observation = self._get_obs()
