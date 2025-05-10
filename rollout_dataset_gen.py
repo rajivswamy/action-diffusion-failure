@@ -9,6 +9,7 @@ from  src.dataset import get_dataset_pusht
 from src.policy import get_action_diffusion_model, load_checkpoint 
 # env import
 from src.envs.sim_pusht import PushTImageEnv
+from src.envs.sim_pusht.pusht_env_simple import PushTImageEnvSimple
 # rollout import
 from src.rollout import rollout
 
@@ -21,7 +22,7 @@ pred_horizon = 16
 obs_horizon = 2
 action_horizon = 8
 
-device = "cuda:1"
+device = "cuda:0"
 encoder_name = "resnet18"
 vision_feature_dim = 512
 lowdim_obs_dim = 2
@@ -35,10 +36,12 @@ num_diffusion_iters = 100
 max_steps = 300
 trajectory_sample_size = 256
 
-num_trials = 300
+num_trials = 200
 
-log_dir = "logs/datasets/no_domain_randomization_v3"
+log_dir = "logs/datasets/no_domain_randomization_v7_simple_env"
 checkpoint_path = "demo/ema_100ep_pretrained_paper.pth"
+
+simple_env = True
 
 def main():
     
@@ -64,7 +67,8 @@ def main():
         "trajectory_sample_size": trajectory_sample_size,
         "num_trials":           num_trials,
         "log_dir":              log_dir,
-        "checkpoint_path":      checkpoint_path
+        "checkpoint_path":      checkpoint_path,
+        "simple_env": simple_env
     }
 
 
@@ -86,14 +90,20 @@ def main():
     )
 
     load_checkpoint(model=nets, checkpoint_path=checkpoint_path, device=device)
+    
+    width = len(str(num_trials - 1))
 
     for i in range(num_trials):
 
-        name = f"episode_{i}"
+        name = f"episode_{i:0{width}d}"
 
         seed = np.random.randint(210,25536)
 
-        env = PushTImageEnv(seed=seed)
+        if simple_env:
+            env = PushTImageEnvSimple()
+            env.seed(seed)
+        else:
+            env = PushTImageEnv(seed=seed)
 
         rollout_data, success = rollout(ema_nets=nets,
             env=env,
@@ -119,6 +129,12 @@ def main():
 
         # save data
         df = pd.DataFrame(rollout_data)
+
+        # add a column 'success' to the dataframe
+        # fills the entire column with the value of success
+        df["success"] = success
+        df["episode"] = i
+
         df.to_pickle(os.path.join(log_dir, f"{name}_{suffix}.pkl"))
 
 if __name__ == "__main__":

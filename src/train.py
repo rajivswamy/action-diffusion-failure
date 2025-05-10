@@ -74,6 +74,8 @@ def train_diff_model(nets,
         num_training_steps=len(dataloader) * num_epochs
     )
 
+    all_epoch_losses = []
+
     with tqdm(range(num_epochs), desc='Epoch') as tglobal:
         # epoch loop
         for epoch_idx in tglobal:
@@ -137,6 +139,7 @@ def train_diff_model(nets,
                     epoch_loss.append(loss_cpu)
                     tepoch.set_postfix(loss=loss_cpu)
             tglobal.set_postfix(loss=np.mean(epoch_loss))
+            all_epoch_losses.append(np.mean(epoch_loss))
 
             # save EMA params of model every checkpoint_every epochs
             if (epoch_idx + 1) % checkpoint_every == 0:
@@ -159,7 +162,7 @@ def train_diff_model(nets,
     # save loss data and model to the logdir
     torch.save({'model_state_dict': ema_nets.state_dict()}, 
                final_path)
-    np.save(os.path.join(logdir, 'loss.npy'), np.array(epoch_loss))
+    np.save(os.path.join(logdir, 'loss.npy'), np.array(all_epoch_losses))
 
     print(f"Training finished. Model saved to {logdir}/model.pth")
 

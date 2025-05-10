@@ -18,13 +18,13 @@ vision_feature_dim = 512
 lowdim_obs_dim = 2
 action_dim = 2
 
-num_epochs = 300
+num_epochs = 2000
 batch_size = 256
 num_workers = 4
 num_diffusion_iters = 100
-checkpoint_every = 100
+checkpoint_every = 300
 
-logdir = "logs/train/default_long_run"
+logdir = "logs/train/default_long_run_5-9"
 model_name = "action-diff"
 
 def main():
