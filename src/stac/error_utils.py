@@ -187,6 +187,8 @@ CONSISTENCY_DIST_ERROR_FNS: Dict[str, Callable[[np.ndarray, np.ndarray], float]]
 }
 
 
+
+
 TRAJECTORY_ERRORS = {"ate"}
 
 
@@ -375,7 +377,8 @@ def knn_entropy(X, k=5):
     # drop the zero‐distance to self
     eps = dists[:, -1]  
     const = np.log(np.pi**(d/2) / gamma(d/2 + 1))
-    return -digamma(k) + digamma(N) + const + (d * np.mean(np.log(eps + 1e-12)))
+    result = -digamma(k) + digamma(N) + const + (d * np.mean(np.log(eps + 1e-12)))
+    return result.item()
 
 
 def gmm_entropy(X, n_components):
@@ -429,13 +432,21 @@ def kde_entropy(
 
     # 5) Monte-Carlo entropy estimate
     mean_entropy = -np.mean(log_p)
-    return mean_entropy
+    return mean_entropy.item()
+
+ENTROPY_ERROR_FNS  = {
+    "knn": knn_entropy,
+    "gmm": gmm_entropy,
+    "kde": kde_entropy
+}
 
 
 def compute_action_entropy(
+        error_fn: str,
         actions: np.ndarray, # (B, pred_horizon, action_dim)
         pred_horizon: int,
-        action_dim: int):
+        **kwargs
+):
     
     assert actions.ndim == 3, "Must be a batch of actions."
     assert pred_horizon <= actions.shape[1]
@@ -443,8 +454,13 @@ def compute_action_entropy(
 
     X = actions.reshape(actions.shape[0], -1)
 
+    if error_fn in ENTROPY_ERROR_FNS:
+        error_fn = ENTROPY_ERROR_FNS[error_fn]
+        error = error_fn(X, **kwargs)
+    else:
+        raise ValueError(f"Error function {error_fn} does not exist.")
     
-
+    return error
 
 
 def topk_embeddings(
