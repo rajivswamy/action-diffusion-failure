@@ -53,6 +53,7 @@ def rollout(ema_nets,
     block_poses = []
     goal_poses = []
     step_image_features = []
+    step_agent_poses = []
 
     success = False
 
@@ -79,10 +80,11 @@ def rollout(ema_nets,
             with torch.no_grad():
                 # get image features
                 image_features = ema_nets['vision_encoder'](nimages)
-                # (2,512)
+                # (2,512) should be the shape here
 
                 # log the image features for each replanning step
                 step_image_features.append(image_features.cpu().numpy())
+                step_agent_poses.append(nagent_poses.cpu().numpy())
 
                 # concat with low-dim observations
                 obs_features = torch.cat([image_features, nagent_poses], dim=-1)
@@ -190,6 +192,8 @@ def rollout(ema_nets,
         'block_poses': block_poses,
         'goal_poses': goal_poses,
         'step_image_features': step_image_features,
-    }
+        'step_agent_poses': step_agent_poses 
+    } 
+    # step image features and step agent poses make up observation
 
     return data, success

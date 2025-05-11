@@ -3,6 +3,14 @@ from typing import List, Dict, Callable, Optional, Union, Any
 import numpy as np
 from sklearn import metrics
 from sklearn.neighbors import KernelDensity
+import ot
+
+# KNN Entropy Calculation
+from sklearn.neighbors import NearestNeighbors
+from scipy.special     import digamma, gamma
+# GMM Entropy Calculation
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
 
 from .action_utils import (
     filter_actions,
@@ -139,6 +147,29 @@ def compute_kde_kl(
         kl_est = np.mean(log_q - log_p)
     return kl_est
 
+def compute_wasserstein_ot(x: np.ndarray, y: np.ndarray, p: int = 1) -> float:
+    """
+    Exact p-Wasserstein distance between two empirical measures on R^D.
+
+    Args:
+      x: [N, D] array 
+      y: [M, D] array
+      p: ground‐metric exponent (1 for 1-Wasserstein, 2 for 2-Wasserstein)
+
+    Returns:
+      W_p(x, y)
+    """
+    n, m = x.shape[0], y.shape[0]
+    a = np.ones(n) / n   # uniform weights over x
+    b = np.ones(m) / m   # uniform weights over y
+
+    # cost matrix: ||x_i - y_j||_2^p
+    M = ot.dist(x, y, metric='euclidean')**p  # shape [128,128]
+
+    # emd2 returns the p-th power of W_p
+    Wp_p = ot.emd2(a, b, M)
+    return float(Wp_p**(1.0/p))
+
 
 CONSISTENCY_ERROR_FNS: Dict[
     str, Callable[[np.ndarray, np.ndarray], Union[float, np.ndarray]]
@@ -152,6 +183,7 @@ CONSISTENCY_ERROR_FNS: Dict[
 CONSISTENCY_DIST_ERROR_FNS: Dict[str, Callable[[np.ndarray, np.ndarray], float]] = {
     "mmd_rbf": compute_mmd_rbf,
     "kde_kl": compute_kde_kl,
+    "wass": compute_wasserstein_ot
 }
 
 
@@ -332,6 +364,87 @@ def compute_action_variance(
 
     variance: np.ndarray = actions.var(axis=0).mean()
     return variance.item()
+
+
+
+def knn_entropy(X, k=5):
+    # X: (N, d) array of flattened trajectories
+    N, d = X.shape
+    nbrs = NearestNeighbors(n_neighbors=k+1, algorithm="auto").fit(X)
+    dists, _ = nbrs.kneighbors(X)
+    # drop the zero‐distance to self
+    eps = dists[:, -1]  
+    const = np.log(np.pi**(d/2) / gamma(d/2 + 1))
+    return -digamma(k) + digamma(N) + const + (d * np.mean(np.log(eps + 1e-12)))
+
+
+def gmm_entropy(X, n_components):
+    scaler = StandardScaler()
+    X_norm = scaler.fit_transform(X)
+
+    gmm = GaussianMixture(
+        n_components=n_components,
+        covariance_type='full',
+        reg_covar=1e-6,
+    )
+    gmm.fit(X_norm)
+
+    log_probs = gmm.score_samples(X_norm) 
+
+    mean_entropy = -np.mean(log_probs)
+
+    return mean_entropy.item()
+
+def kde_entropy(
+    X: np.ndarray,
+    kernel: str = "gaussian",
+    bandwidth: Union[float, str] = 1.0
+) -> float:
+    """
+    Given a data matrix X of shape (N, D), fit a KDE and return
+    the Monte-Carlo estimate of the differential entropy:
+       H ≈ -1/N ∑ log p_hat(x_i)
+
+    Steps:
+      2) determine bandwidth if string
+      3) fit KDE on X
+      4) score_samples → log p(x_i)
+      5) compute Monte-Carlo entropy estimate
+    """
+    # 2) determine bandwidth if string
+    if isinstance(bandwidth, str):
+        if bandwidth == "max_eig":
+            cov = np.cov(X, rowvar=False)
+            max_eig = np.max(np.linalg.eigvalsh(cov))
+            bandwidth = np.sqrt(max_eig)
+        else:
+            raise ValueError(f"Unsupported bandwidth: {bandwidth}")
+
+    # 3) fit KDE
+    kde = KernelDensity(kernel=kernel, bandwidth=bandwidth)
+    kde.fit(X)
+
+    # 4) evaluate log density at each sample
+    log_p = kde.score_samples(X)  # shape (N,)
+
+    # 5) Monte-Carlo entropy estimate
+    mean_entropy = -np.mean(log_p)
+    return mean_entropy
+
+
+def compute_action_entropy(
+        actions: np.ndarray, # (B, pred_horizon, action_dim)
+        pred_horizon: int,
+        action_dim: int):
+    
+    assert actions.ndim == 3, "Must be a batch of actions."
+    assert pred_horizon <= actions.shape[1]
+    actions = actions[:, :pred_horizon]
+
+    X = actions.reshape(actions.shape[0], -1)
+
+    
+
 
 
 def topk_embeddings(

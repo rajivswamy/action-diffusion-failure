@@ -22,7 +22,7 @@ pred_horizon = 16
 obs_horizon = 2
 action_horizon = 8
 
-device = "cuda:1"
+device = "cuda:0"
 encoder_name = "resnet18"
 vision_feature_dim = 512
 lowdim_obs_dim = 2
@@ -36,12 +36,15 @@ num_diffusion_iters = 100
 max_steps = 300
 trajectory_sample_size = 256
 
-num_trials = 200
+num_trials = 50
 
-log_dir = "logs/datasets/no_domain_randomization_v8_simple_env"
+log_dir = "logs/datasets/domain_randomization_v2"
 checkpoint_path = "demo/ema_100ep_pretrained_paper.pth"
 
-simple_env = True
+# DR Variables
+scale_low=1.0 
+scale_high=2.0 
+uniform_scaling=True
 
 def main():
     
@@ -68,7 +71,11 @@ def main():
         "num_trials":           num_trials,
         "log_dir":              log_dir,
         "checkpoint_path":      checkpoint_path,
-        "simple_env": simple_env
+        "domain_randomization": {
+            "scale_low": scale_low,
+            "scale_high": scale_high,
+            "uniform_scaling": uniform_scaling
+        }
     }
 
 
@@ -99,11 +106,10 @@ def main():
 
         seed = np.random.randint(210,25536)
 
-        if simple_env:
-            env = PushTImageEnvSimple()
-            env.seed(seed)
-        else:
-            env = PushTImageEnv(seed=seed)
+        env = PushTImageEnv(seed=seed, 
+                            scale_low=scale_low, 
+                            scale_high=scale_high, 
+                            uniform_scaling=uniform_scaling)
 
         rollout_data, success = rollout(ema_nets=nets,
             env=env,
