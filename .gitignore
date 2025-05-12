@@ -11,6 +11,7 @@ demo/ema_100ep_pretrained_paper.pth
 __pycache__/
 *.py[cod]
 *$py.class
+.DS_Store
 
 # C extensions
 *.so
