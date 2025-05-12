@@ -38,12 +38,12 @@ trajectory_sample_size = 256
 
 num_trials = 50
 
-log_dir = "logs/datasets/domain_randomization_v2"
+log_dir = "logs/datasets/domain_randomization_v3"
 checkpoint_path = "demo/ema_100ep_pretrained_paper.pth"
 
 # DR Variables
-scale_low=1.0 
-scale_high=2.0 
+scale_low=0.5
+scale_high=1.0 
 uniform_scaling=True
 
 def main():

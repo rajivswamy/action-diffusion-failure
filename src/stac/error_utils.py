@@ -381,7 +381,7 @@ def knn_entropy(X, k=5):
     return result.item()
 
 
-def gmm_entropy(X, n_components):
+def gmm_entropy(X, n_components=5):
     scaler = StandardScaler()
     X_norm = scaler.fit_transform(X)
 
