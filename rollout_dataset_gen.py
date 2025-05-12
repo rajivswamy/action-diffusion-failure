@@ -36,9 +36,9 @@ num_diffusion_iters = 100
 max_steps = 300
 trajectory_sample_size = 256
 
-num_trials = 200
+num_trials = 50
 
-log_dir = "logs/datasets/no_domain_randomization_v8_simple_env"
+log_dir = "logs/datasets/no_domain_randomization_v9_valid"
 checkpoint_path = "demo/ema_100ep_pretrained_paper.pth"
 
 simple_env = True
@@ -97,7 +97,7 @@ def main():
 
         name = f"episode_{i:0{width}d}"
 
-        seed = np.random.randint(210,25536)
+        seed = np.random.randint(25537,1000000)
 
         if simple_env:
             env = PushTImageEnvSimple()
