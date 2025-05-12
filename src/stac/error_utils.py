@@ -4,6 +4,7 @@ import numpy as np
 from sklearn import metrics
 from sklearn.neighbors import KernelDensity
 import ot
+import inspect
 
 # KNN Entropy Calculation
 from sklearn.neighbors import NearestNeighbors
@@ -147,7 +148,7 @@ def compute_kde_kl(
         kl_est = np.mean(log_q - log_p)
     return kl_est
 
-def compute_wasserstein_ot(x: np.ndarray, y: np.ndarray, p: int = 1) -> float:
+def compute_wasserstein_ot(x: np.ndarray, y: np.ndarray, p: int = 1, gamma: Optional[Union[float, str]] = None) -> np.ndarray:
     """
     Exact p-Wasserstein distance between two empirical measures on R^D.
 
@@ -168,7 +169,7 @@ def compute_wasserstein_ot(x: np.ndarray, y: np.ndarray, p: int = 1) -> float:
 
     # emd2 returns the p-th power of W_p
     Wp_p = ot.emd2(a, b, M)
-    return float(Wp_p**(1.0/p))
+    return np.array(Wp_p**(1.0/p))
 
 
 CONSISTENCY_ERROR_FNS: Dict[
@@ -306,16 +307,34 @@ def compute_temporal_error(
                 prev, time=1 / sim_freq, num_robots=num_robots
             )
 
+    # Helper function to filter kwargs based on callable's signature
+    def get_filtered_kwargs(callable_fn, all_kwargs):
+        sig = inspect.signature(callable_fn)
+        valid_param_names = {p.name for p in sig.parameters.values()
+                               if p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+                               or p.kind == inspect.Parameter.KEYWORD_ONLY}
+        accepts_varkwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
+        if accepts_varkwargs:
+            return all_kwargs
+        return {k: v for k, v in all_kwargs.items() if k in valid_param_names}
+
     if error_fn in CONSISTENCY_ERROR_FNS:
-        error_fn = CONSISTENCY_ERROR_FNS[error_fn]
-        error: np.ndarray = error_fn(curr, prev)
+        actual_error_fn = CONSISTENCY_ERROR_FNS[error_fn]
+        filtered_kwargs = get_filtered_kwargs(actual_error_fn, kwargs)
+        error: np.ndarray = actual_error_fn(curr, prev, **filtered_kwargs)
     elif error_fn in CONSISTENCY_DIST_ERROR_FNS:
-        error_fn = CONSISTENCY_DIST_ERROR_FNS[error_fn]
+        actual_error_fn = CONSISTENCY_DIST_ERROR_FNS[error_fn]
         curr = curr.reshape(curr.shape[0], -1) # flattens output here
         prev = prev.reshape(prev.shape[0], -1) # flattens output here
-        error: np.ndarray = error_fn(curr, prev, **kwargs)
+        filtered_kwargs = get_filtered_kwargs(actual_error_fn, kwargs)
+        error: np.ndarray = actual_error_fn(curr, prev, **filtered_kwargs)
+    elif error_fn in TRAJECTORY_ERRORS:
+        actual_error_fn = TRAJECTORY_ERRORS[error_fn]
+        # Assuming TRAJECTORY_ERRORS functions might also not want all kwargs
+        filtered_kwargs = get_filtered_kwargs(actual_error_fn, kwargs)
+        error: np.ndarray = actual_error_fn(curr, prev, **filtered_kwargs)
     else:
-        raise ValueError(f"Error function {error_fn} does not exist.")
+        raise ValueError(f"Unknown error function: {error_fn}")
 
     return error if is_batch else error.item()
 
