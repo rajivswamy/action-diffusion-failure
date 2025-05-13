@@ -62,6 +62,14 @@
 			padding: 5px;
 		}
 
+		.main-content-block p {
+			line-height: 1.5;
+		}
+
+		.main-content-block li {
+			line-height: 1.6;
+		}
+
 		.margin-right-block {
 			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
 			#"Avenir";
@@ -304,12 +312,13 @@
 		</div>
 		<div class="main-content-block">
 			<h2>Introduction and Motivation</h2>
-			Motivate your project. What question are you asking. Why is it unanswered so far? What gap in the literature
-			or practice are you filling?
-			Why is it important?$$ \sum_{i=0}^{n} i = \frac{n(n+1)}{2} $$.
-		</div>
-		<div class="margin-right-block">
-			Margin note that clarifies some detail #main-content-block for intro section.
+			<p>Diffusion models have shown promising capabilities for imitation learning through expert demos to produce low-level control for robotic manipulation tasks <a href="#ref_1">[1]</a>. Recent work shows that modeling the action-generating policy as an iterative denoising process is effective at achieving high success rates both in simulation and the real world, achieving temporal consistency, the ability to express multi-modal action distributions, and stable training. Despite achieving state-of-the-art success rates for simulation and real demonstrations, it is inevitable that such models trained via behavioral cloning will fail during deployment, especially when encountering states that are out of distribution (OOD). Consider the scenario of complex factory assembly or handling a delicate tool to achieve some task. To mitigate such issues, another line of research has explored methods to detect robot failures before they occur, so as to prevent a deployment disaster and call for human intervention if necessary.</p>
+			<p>This project explores the <a href="https://github.com/agiachris/sentinel/tree/main">Sentinel</a> failure detection framework for generative robot-learning policies, specifically from the perspective of erratic behavior detection. The work presents Statistical Temporal Action Consistency (STAC) which computes statistical distances between overlapping action predictions with cumulative scoring as a novel metric to flag an execution as a failure during rollout <a href="#ref_2">[2]</a>. We extend the work of the Sentinel guiding work in several ways: 1) we apply the framework to the vision-based Push-T environment (the paper assumes a state-based proprioceptive input) and report success metrics of STAC, 2) introduce new methods for the failure detection (adding Wasserstein distance as a distance measure for STAC, analyzing the viability of using visual latent embeddings for failure detection, and utilizing differential entropy as a means of computing action uncertainty), and 3) critically analyze the STAC method and cumulative scoring, finding two limitations in our analysis. Our code is available <a href="https://github.com/rajivswamy/action-diffusion-failure">here</a>.</p>
+			<p>Hence, this project aims to answer the following research questions:</p>
+			<ul>
+			    <li><b>How can we detect deployment failures in robot diffusion visuomotor policies, and what are the limitations of pre-existing methods?</b></li>
+			    <li><b>How do the visual latent embeddings in vision-based action-diffusion models exhibit control-oriented clustering?</b></li>
+			</ul>
 		</div>
 	</div>
 	<!-- INTRODUCTION END -->
@@ -320,56 +329,16 @@
 		</div>
 		<div class="main-content-block">
 			<h2>Background</h2>
-			<h1>Generative Robot-Learning</h1>
-            <h1>Problem Statement</h1>
-            <h1>STAC Method</h1>
-            <h1>Entropy-Based Failure Detection</h1>
-            <h1>Visual Latent Embeddings</h1>
-
-			Now let's write some math!<br>
-			<center>
-				<math xmlns="http://www.w3.org/1998/Math/MathML">
-					<mrow>
-						<mrow>
-							<mo>&#x2202;</mo>
-							<mi>y</mi>
-						</mrow>
-						<mo>/</mo>
-						<mrow>
-							<mo>&#x2202;</mo>
-							<mi>x</mi>
-						</mrow>
-					</mrow>
-					<mo>=</mo>
-					<mi>x</mi>
-				</math>
-			</center>
-			<br>
-			It's probably best to ask an LLM to help do the web
-			formatting for math. You can tell it "convert this latex equation into MathML: $$\frac{\partial dy}{\partial
-			dx} = x$$"
-			But it took me a few tries. So, if you get frustrated, you can embed an image of the equation, or use other
-			packages for
-			rendering equations on webpages.
-		</div>
-		<div class="margin-right-block" style="transform: translate(0%, -100%);">
-			<!-- you can move the margin notes up and down with translate -->
-			Interestingly, Plato also asked if X does Y, in <a href="#ref_1">[1]</a>.
-		</div>
-	</div>
-
-	<div class="content-margin-container">
-		<div class="margin-left-block">
-		</div>
-		<div class="main-content-block">
-			<h1>Another section</h1>
-			In this section we embed a video:
-			<video class='my-video' loop autoplay muted style="width: 725px">
-				<source src="./images/mtsh.mp4" type="video/mp4">
-			</video>
-		</div>
-		<div class="margin-right-block">
-			A caption for the video could go here.
+				<h1>Generative Robot-Learning</h1>
+					<p>There have been many formulations for utilizing diffusion in generative robot-learning policies <a href="#ref_1">[1]</a>, <a href="#ref_3">[3]</a>. These methods essentially learn the gradient of the action score function via Stochastic Langevin Dynamics sampling. We utilize the Denoising Diffusion Probabilistic Model (DDPM) formulation presented by Chi et al. <a href="#ref_1">[1]</a> due to its stable training and extensive development. It is a vision-conditioned diffusion policy that's characterized by an observation horizon \(T_o\), a prediction horizon \(T_p\), and an action horizon \(T_a < T_p\). The policy utilizes the latest \(T_o\) observations for visual conditioning and executes the first \(T_a\) steps of its \(T_p\) length prediction trajectory before drawing another prediction from the diffusion policy. This process of replanning (termed Receding Horizon Control) in a closed-loop encourages temporal action consistency for the model.</p>
+				<h1>Problem Statement</h1>
+					<p>This work focuses on the failure detection problem in generative robot policies (we borrow the same formulation from Sentinel and discussed by Xu et al. <a href="#ref_2">[2]</a>, <a href="#ref_4">[4]</a>). The goal of failure detection is to learn a function \(f\) that detects when a generative robot policy \(\pi(a|s)\) fails to complete its goal. The failure detector \(f(\tau_t) \rightarrow \{ok, failure\}\) takes as input a state-action trajectory up until timestep \(t\) and returns a continue or failure flag at each planning time step. The failure detectors are implemented as a scoring function that needs calibration for deployment (for this setup, lower scores are better). The calibration is accomplished by taking a sample of \(N\) successful trajectories \(\mathcal{D}_\tau\) and defining a quantile \(0 < \alpha < 1\) on the distribution of successful trajectory scores to produce a failure threshold. This way, a failure detector implemented with this framework doesn't need to be trained to recognize any failure modes a priori and instead relies on detecting deviations from successful IID examples.</p>
+				<h1>STAC Method</h1>
+					<p>Notably, the STAC method Agia et al. <a href="#ref_1">[1]</a> present relies on comparing the overlapping portions of a batch of denoised trajectories (the overlapping action sequences are a direct consequence of the RHC) between consecutive time steps, resulting in the distance measure \(\hat{D}(\bar{\pi}_t, \tilde{\pi}_{t+k}) > 0\). The key contribution is to compute the difference between the overlapping distributions with a statistical distance measure. If the policy displays temporal high confidence in its rollout and action temporal consistency, then this statistical distance is lower. In addition to contributing the STAC method, Agia et al. <a href="#ref_1">[1]</a> utilize a cumulative scoring method to calibrate the STAC failure detector. Currently, the STAC detector employs hyperparameter-tuned Maximum Mean Discrepancy and KL-divergence via Kernel Density Estimation approaches as statistical distance measures. To extend the STAC pipeline, we explore using the Wasserstein metric (also known as Earth Mover's Distance) as another distance measure for STAC. Our rationale for exploring Wasserstein distance is its interpretability and robustness to non-overlapping support. In addition, the existing STAC approaches rely on crucially tuned hyperparameters such as kernel and KDE bandwidth.</p>
+				<h1>Entropy-Based Failure Detection</h1>
+				<p>Another route of measuring model uncertainty in machine learning is entropic OOD detection <a href="#ref_5">[5]</a>, <a href="#ref_6">[6]</a>, which relies on measuring the entropy of model output distributions. During every planning time step, a batch of action-trajectory sequences can be modeled as a continuous probability distribution, from which we can model an underlying differential entropy. This project explores utilizing differential entropy as a method of uncertainty quantification for a failure score generating function.</p>
+				<h1>Visual Latent Embeddings</h1>
+				<p>Recent research has shown that vision-based action-diffusion policies exhibit control-oriented clustering in their visual latent representation. Qi et al. <a href="#ref_7">[7]</a> demonstrate the emergence of neural collapse (NC) in the visual representation space of image-based control pipelines. Agia et al. <a href="#ref_1">[1]</a> employ pre-trained ResNet embeddings and, at inference, a nearest neighbor distance as a failure scoring method. However, Qi et al. <a href="#ref_7">[7]</a> point out that pre-trained/frozen ResNet features deliver poor performance for control tasks since they are tuned for classification. Given the research direction in linking the visual latent space to robot control, we explore using the fine-tuned embeddings from the visual observations of the action-diffusion model to define a new failure detector.</p>
 		</div>
 	</div>
 
@@ -380,17 +349,33 @@
 		<div class="main-content-block">
 			<h2>Methods + Experiments</h2>
 				<h1>Environment + Model</h1>
+				<p>For this project, we employ the simulated Push-T planar pushing task. It consists of an agent in charge of pushing a large gray block "T" to a goal pose from randomly initialized agent/block positions. The agent is given visual observations of the space and the current agent position.</p>
+				<ul>
+				    <li>Action Space: The agent position; 2-dimensional \((x, y)\) coordinates</li>
+				    <li>Observation: Visual Observation + Current agent position</li>
+				    <li>Task: Push a gray block "T" to the goal pose with \(\ge 90\%\) coverage of the goal region.</li> 
+				    <li>Max Episode Length: 300 time steps, if an agent reaches successful coverage, the episode terminates.</li>
+				    <li>Action-Diffusion Hyperparams: \(T_p=16\), \(T_a=8\), \(T_o\), we kept the default values for these.</li>
+				    <li>Batch Sampling: During rollout, we batch sample \(N=256\) action trajectories (shape \(256 \times 16 \times 2\)) at each planning timestep, picking one action sequence at random to execute.</li>
+				</ul>
+				<p>For the Push-T action-diffusion model, we utilize the 100-epoch trained checkpoint from Chi et al.'s vision-based <a href="https://colab.research.google.com/drive/18GIHeOQ5DyjMN8iIRZL2EKZ0745NLIpg?usp=sharing#scrollTo=VrX4VTl5pYNq">notebook</a>. The training data consists of ~200 human-collected trajectory data. We trained several more models, varying the training hyperparameters, and found sub-marginal improvement in the success rate for in-distribution episodes. Since \(T_p=16\) and \(T_a=8\), there are 8 overlapping actions between consecutive planning steps.</p>	
 				<h1>Data Collection, Domain Randomization</h1>
-				<img src="./images/[Table]baseline_scores.png" width=800px />
+				<p>We engineered a parameterized pipeline to collect episode rollout datasets for testing the failure detector methods. For each rollout, the engineered script tracks the following key variables at each planning timestep: the frames belonging to executing the step's plan, the batch of sampled actions, the executed action, agent positions, block poses, the visual observation features, and a success/failure boolean flag for the episode. To induce higher failure rates and OOD environments in testing, we utilize domain randomization on the default Push-T environment to vary the size of the "T" block in environment initialization (via a scale range denoting the multiplicative factor applied to the "T" dimensions). <a href="#fig-1">Figure 1</a> shows the resulting datasets collected for the project. We collected five datasets total, 200 episodes for calibration, one validation dataset, and then 3 domain randomization datasets with different scale ranges.</p>
+				<img src="./images/[Table]baseline_scores.png" id="fig-1"width=800px />
 					<p style="text-align: center"><b>Figure 1. Table of Generated Datasets:</b> The table shows the performances
 						of the baseline diffusion policy on the 5 datasets generated. The calibration dataset's successes are
 						used to find a failure threshold. The validation set is an in-distribution dataset, while the remaining
 						datasets are out-of-distribution due to varying degrees of scaling the Push-T's T object size.</p>
 				<h1>Failure Detection Methodology</h1>
+				<p>We test the following methods for failure detectors, noting which methods we contributed. We primarily build off the evaluation code from Sentinel and modified it to accommodate our collected datasets and methods. We also utilize the 95% quantile for calibrating all failure detectors.</p>
+				<ul>
+				    <li><b>Statistical Temporal Action Consistency (STAC)</b> - This aforementioned method was introduced by Agia et al. <a href="#ref_1">[1]</a>; it computes a distance measure between the overlapping action prediction distributions between consecutive timesteps (\(\hat{D}(\bar{\pi}_t, \tilde{\pi}_{t+k}) > 0\)). The pre-existing distance measures were Maximum Mean Discrepancy and KL-Divergence. We contribute the <b>Wasserstein distance</b> sub-method for STAC. We utilize the <a href="https://pythonot.github.io/">Python Optimal Transport</a> to produce an exact \(p-\)Wasserstein distance between the batches of overlapping actions. We utilize \(p=1\), representing the interpretable Earth Mover's Distance. We also borrow an MSE baseline from Sentinel that computes a non-distributional distance between consecutive executed predictions.</li>
+				    <li><b>Control-Oriented Visual Latent Embeddings</b> - We also test a scoring function that maintains a store of the visual latent embeddings of the successful trajectories from the calibration dataset and returns a nearest neighbor distance. We apply top-k cosine distance and Mahalanobis borrowed distance measures in computing the score for each timestep.</li>
+				    <li><b>Diffusion Variance</b> - Diffusion variance is a baseline borrowed from Sentinel that computes the per-action variance between all the sampled trajectories at a given planning timestep, with the intuition that higher variance between predicted trajectory samples is linked to increased model uncertainty.</li>
+				    <li><b>Differential Entropy</b> - Another scoring function we test is approximating the differential entropy of the trajectory samples at each time step, taking the same input as the Diffusion Variance baseline. We hypothesize that an entropy-based scoring function will better capture model uncertainty around its output trajectories than the baseline diffusion variance score. We test the following sub-methods for calculating the differential entropy at each planning timestep: the KNN <a href="https://kaba.hilvi.org/tim-1.3.0/tim/core/differential_entropy_kl.htm">Kozachenko-Leonenko</a> estimator (used \(k=5\)), a Gaussian Mixture Model (GMM) Monte-Carlo estimator (used \(K=5\) GMM components), and a KDE Monte-Carlo (tune bandwidth, we borrow the bandwidth selection from Sentinel). Each method produces an estimate for \(\hat H(T) = -\frac{1}{N} \sum_{i=1}^{N} \log \hat p(\tau_i)\) for a batch of sampled trajectories.</li>
+				</ul>
 				<h1>Metrics</h1>
-		</div>
-		<div class="margin-right-block">
-			Margin note that clarifies some detail #main-content-block for intro section.
+				<p>When evaluating each scoring method's resulting detections, we treat flagging failure at any timestep \(0 < t < 300 \) during a failed episode as a true positive detection label, with the earliest \(t\) being the detection time for that episode. We collect the TPR, TNR, Mean Detection Time, and Balanced Accuracy as performance metrics for each failure detector configuration.</p>
 		</div>
 	</div>
 	<!-- METHODS END -->
@@ -409,9 +394,9 @@
 							</video>
 							<p style="font-style: italic; margin-top: 5px;">Successful Trajectory</p>
 						</div>
-						<div style="text-align: center;">
+						<div style="text-align: center;" id="fig-2">
 							<video class='my-video' loop autoplay muted style="width: 230px">
-									<source src="./images/vis_failure.mp4" type="video/mp4">
+									<source src="./images/vis_failure.mp4"  type="video/mp4">
 							</video>
 							<p style="font-style: italic; margin-top: 5px;">Failure Trajectory</p>
 						</div>
@@ -424,32 +409,43 @@
 					</div>
 					<p style="text-align: center"><b>Figure 2. Example Trajectories in Push-T Simulation:</b> These are example trajectories for how the Push-T simulation works. Observe that the point on the screen acts as the end-effector of a robotic arm which pushes the T-shaped object to the green-shaded T target. The first video shows a successful trajectory, the second video shows a failure trajectory, and the third video shows a multi-modal trajectory at the start, where left and right trajectories are considered.</p>
 					<h4>Baseline Performances</h4>
+					<p><a href="#fig-1">Figure 1</a> exhibits the baseline performances of the diffusion policy on our generated datasets, which are annotated with scale ranges for domain randomization. We observe that, trivially due to how the Push-T environment is set up, the episode duration for all failures is 300 as the environment executes until the maximum timesteps is reached or a success state is reached. This mirrors the setup in Sentinel. The results show that the action-diffusion policy achieves roughly comparable performance on both the calibration (in‑distribution) and validation (in‑distribution) sets, with mean success duration times of 159.8 vs. 149.1 and success rates of 48.5% vs. 50.0%. Introducing light domain randomization (scaling between 1.0–1.3) yields a slightly higher average success duration (167.6) and a modest drop in success rate to 42.0%, suggesting that the policy is capable of adapting to slight changes from the training data distribution. In contrast, heavy randomization (scale 1.0–2.0) cuts the success rate to 20.0% and reduces the mean success time back to the in‑distribution level (149.6), while heavy down‑scaling (0.5–1.0) produces a similar effects with a slightly higher mean success time (162), very high variance (std 82.2), and the lowest success rate overall (16.0%). These trends indicate that extreme changes in object scale, particularly making objects much smaller, push the model well outside its learned representations of the Push-T environment. Overall, the policy struggles to generalize under severe OOD scale variations. This effect allows us to create datasets with varying balances of successful and unsuccessful trajectories to observe each failure detection’s performance across in-distribution and OOD trajectories.</p>
 					<h4>Latent Representation Exploration</h4>
 					<div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
-						<img src="./images/Latent Embedding Graph.png" style="width: 600px; margin: 0;" />
+						<img src="./images/Latent Embedding Graph.png" id="fig-3" style="width: 600px; margin: 0;" />
 						<img src="./images/Latent_embedding_explanation.png" style="width: 300px; margin: 0;" />
 					</div>
-					<p style="text-align: center"><b>Figure 1. Table of Generated Datasets:</b> The table shows the performances
-						of the baseline diffusion policy on the 5 datasets generated. The calibration dataset's successes are
-						used to find a failure threshold. The validation set is an in-distribution dataset, while the remaining
-						datasets are out-of-distribution due to varying degrees of scaling the Push-T's T object size.</p>
+					<p style="text-align: center"><b>Figure 3. t-SNE Plot of Visual Observation Embeddings:</b>This plot shows visual observation embeddings for the relative pose orthant classes. From observation alone, there seems to be some clustering between relative pose orthant classes.</p>
+					<p>To answer the second research question, we aggregated the visual observation embeddings (which are comprised of the fine-tuned ResNet embeddings (dim=512) plus the agent position at each timestep) and applied PCA dimensionality reduction, followed by t-SNE to visualize the high-dimensional data. We labeled each embedding according to 8 goal-oriented relative pose orthants (borrowed from Qi et al. <a href="#ref_7">[7]</a>). <a href="#fig-3">Figure 3</a> shows the resulting visualization with a legend for the relative pose orthant class labels. There seems to be some clustering between relative pose orthant classes. We also note that embeddings labeled by orthants that are adjacent to each other seem to neighbor each other as well in the embedding space (e.g., labels 4 and 5). To further validate a relationship, we trained a linear classifier (multinomial logistic regression) mapping the embeddings to the class labels, achieving a cross-validation accuracy \(0.75 \pm 0.015\), showing that there is relatively strong predictive power and that there is a control-oriented relationship in this embedding space. Because of this relationship, we hypothesized that these embeddings would be effective for failure prediction.</p>
 				<h3>Failure Detector Results</h3>
-					<img src="./images/[Table]exp_results.png" width=1024px />
-					<p style="text-align: center"><b>Figure 3. Table of Experiment Results:</b> The table shows the failure detection performances
+					<img src="./images/[Table]exp_results.png" id="fig-4" width=1024px />
+					<p style="text-align: center"><b>Figure 4. Table of Experiment Results:</b> The table shows the failure detection performances
 						of the methods STAC, Embedding, Diffusion Variance, and Entropy with various corresponding error functions across two scoring mechanisms: Cumulative-Episode Scoring and I.I.D. Timestep Scoring. The method configurations are ran on the 4 types of generated datasets.</p>
-					<h4> STAC Method</h4>
+						<h4> STAC Method</h4>
+					<p>The STAC family of detectors, which measure distributional shift via MSE, MMD, forward–KL (with KDE), and Wasserstein distances on the diffusion model’s predictions, exhibits consistently strong performance across all test conditions. In the <em>cumulative episode score</em> mode, MMD and forward–KL yield balanced accuracies above 0.93 (light DR) to 1.00 (heavy DR scale 1.0–2.0), and even MSE maintains a balanced accuracy \(\ge 0.87\) under severe scaling (0.5–1.0). Detection times cluster around 200–240 timesteps, meaning failures are flagged further along an episode, closer to the max duration. In the <em>IID timestep score</em> mode, STAC still delivers robust balanced accuracies (\(\approx0.64–0.73\)) and detects anomalies within the first 50–90 timesteps. Overall, STAC’s distribution‐based metrics reliably identify both in‐distribution and out‐of‐distribution failures with high precision and moderate latency.</p>
+					<p>Our addition of Wasserstein Distance as STAC’s error function produces comparable results to STAC’s best-performing error functions MMD and forward-KL, and we conclude it is worth considering as an alternative error function.</p>
 					<h4>Visual Latent Embeddings</h4>
+					<p>Embedding‐based detection uses distances in the vision encoder’s latent space. Cosine‐similarity fails to distinguish failure frames (true‐positive rates \(\approx\) 0), yielding balanced accuracies \(<\) 0.6 in all of the Cumulative Ep score settings. It does marginally better in the IID Timestep score setting with balanced accuracies \(<\) 0.76. By contrast, Mahalanobis distance on the same embeddings achieves near‐perfect classification in the cumulative mode (balanced accuracies \(\le\) 0.96 across all DR scales and in‐distribution), but only flags episodes very late (mean detection step \(\approx\) 220–270). In the IID mode, Mahalanobis retains reasonable true‐positive rates (0.40–0.63) and balanced accuracies around 0.53–0.69, while detecting failures almost immediately (5–11 timesteps). Thus, latent‐space embeddings can be extremely accurate, but the Mahalanobis distance seems to be the only stable error function implementation for this embeddings approach.</p>
+					<p>We conclude that an embeddings approach with Mahalanobis Distance with Cumulative Episode scoring is quite effective in settings where large detection times are permissible, while an approach with the IID Timestep scoring could be effective in a hierarchical setting where its early detection could be useful.</p>
 					<h4>Entropy-Based Failure Detection</h4>
+					<p>Entropy‐based methods approximate the model’s predictive uncertainty via the KNN, GMM, or KDE estimates discussed in the methods section. Under in‐distribution conditions, KNN and KDE achieve very high cumulative balanced accuracies (\(\ge\) 0.94), but detect failures only at the very end of each episode (\(\approx\) 273 steps). GMM performs poorly in all settings (balanced accuracies \(<\) 0.60). With domain randomization, cumulative balanced accuracies for KNN and KDE remain \(\ge\) 0.75, whereas GMM remains unreliable. In the timestep IID mode, however, all entropy‐based detectors suffer degraded balanced accuracies (often \(<\) 0.60), especially under heavy DR. This likely indicates that entropy captures aggregated novelty at the cost of a large detection time but lacks stability for timestep‐level anomaly detection.</p>
 					<h4>Method Comparison: I.I.D. Timesteps Errors vs. I.I.D. Cumulative Episode Errors</h4>
+					<p>Aggregating anomaly scores over an entire episode using the cumulative calibration mode dramatically boosts classification accuracy for all methods (cumulative balanced accuracies often \(\ge\) 0.90), since random fluctuations can average out and be ignored. The downside is detection latency: most detectors (STAC, embeddings, entropy) only signal failure in the latter half of a full episode (200–280 timesteps). The IID timestep paradigm trades some accuracy for speed: STAC flags failures within 50–90 timesteps, embedding‐Mahalanobis within 5–11 timesteps, and KDE within \(\approx\) 30 timesteps, but balanced accuracies frequently drop below 0.70 under the OOD shifts. Thus, choosing between these scoring modes depends on whether early warning (IID) or high precision (cumulative) is more critical in deployment.</p>
 				<h3>Drawbacks of Sentinel</h3>
 					<h4>Cumulative Calibration and Scoring</h4>
+						<img src="./images/cum_score1.png" id="fig-5" width=900px />
+						<img src="./images/cum_score2.png" width=750px />
+							<p style="text-align: center"><b>Figure 5. Cumulative Score Plots:</b> The first plot shows the cumulative score over time for a successful and a failed episode in the DR (1.0-2.0) dataset. The second plot shows the cumulative score over time for all episodes in the DR (1.0-2.0) dataset. It's worth noting here that failed episodes not only have a higher cumulative score, but also tend to have a longer duration. This inspires our heuristic below, as STAC appears to have an overreliance on the duration of the episode in detecting failures.</p>
+						
+						<img src="./images/heuristic.png" id="fig-6" width=800px />
+							<p style="text-align: center"><b>Figure 6. Blind Detector Heuristic Plot:</b> We use our inspiration from STAC's overreliance on the duration of an episode in detecting failures to produce the Blind Detector Heuristic. This simple baseline benchmark evaluates failure detectors for an overreliance on episode duration, where a better failure detector would detect a failure quicker than the demo threshold while maintaining TPR, TNR, Balanced Accuracy, and F1 Scores above those shown in the plot at the corresponding timesteps.</p>
+					<p>Cumulative scoring, a key component of Agia et al.'s <a href="#ref_1">[1]</a> failure detector pipeline, presents a drawback by being inherently biased towards late detections as shown in <a href="#fig-5">Figure 5</a>, as the successful calibration trajectories inherently have a lower mean detection time than failed trajectories (failed trajectories last a full 300 steps). In our experimental results, we noted that the cumulative mode produces later mean detection times across the board compared to those of the i.i.d. timestep mode. We first interpreted this difference as a result of cumulative mode detectors accumulating error and getting flagged as a result of long episode durations rather than purely based on scoring functions. To ground the performance of the cumulative calibration/scoring mode, we present the performance of a blind detector that returns a failure flag if an episode exceeds some time step \(t\). Trivially, such a detector will achieve a 100% TPR as all failure trajectories take the max episode duration. Hence, varying the threshold will control TNR. <a href="#fig-6">Figure 6</a> displays the metrics of the blind detector varying the threshold \(t\) for the heavy domain randomization dataset (scale 1.0-2.0). One insight we have here is that for a cumulative mode configuration to have meaningful value from it's error function, it must outperform the blind detector's balanced performance metrics around its mean detection time (one can interpret this as a grounding performance frontier). In the case of the scale 1.0-2.0 dataset, the majority of the distance function configs in cumulative mode achieve/weakly surpass the evaluation metrics of the blind detector at mean detection times between 200-230. Hence, we do claim that the cumulative scoring provides some, albeit minimal, meaningful value to the failure detector beyond waiting for episode duration.</p>
+					<p>To mitigate against this drawback for cumulative scoring, failure detection rollout datasets should have failures of varying durations (stop when a tangible irrecoverable failure occurs; this isn't easily defined for the Push-T simulation environment).</p>
 					<h4>Multi-Modal Trajectories</h4>
-			Motivate your project. What question are you asking. Why is it unanswered so far? What gap in the literature
-			or practice are you filling?
-			Why is it important?$$ \sum_{i=0}^{n} i = \frac{n(n+1)}{2} $$.
+					<p>Although STAC’s distributional distance error functions (MSE, MMD, forward–KL, Wasserstein) reliably flag failures based on the experimental results, they share an edge case in the case of multi-modal action trajectories as shown in <a href="#fig-2">Figure 2</a>'s third example: by comparing overlapping distributions of action trajectories between consecutive planning time steps, the statistical distance functions may inadvertently penalize an episode's cumulative score when encountering multi-modal action sequences. Consider a scenario at timestep \(t\) where the diffusion generates a bimodal action trajectory plan (there are two reasonable paths for robot execution) and at timestep \(t+8\) where the robot commits to one trajectory. With the way STAC is currently set up (\(\hat{D}(\bar{\pi}_t, \tilde{\pi}_{t+8})\)), the unimodal distribution in \(t+8\) (\(\tilde{\pi}_{t+8}\)) for \(t+8\) to \(t+16\) will be directly compared to the bimodal distribution in the planning step at \(t\) (\(\bar{\pi}_t\)) for the overlapping actions. In an ideal setting, \(\tilde{\pi}_{t+8}\) should only be compared to the portion of the initial multimodal trajectory it commits to. One way we envision the STAC method overcoming this is to be multimodal aware in its distance calculation, perhaps via K-Means clustering. However, such approaches may require further hyperparameter tuning, reducing their effectiveness for general use.</p>
 		</div>
 		<div class="margin-right-block">
-			Margin note that clarifies some detail #main-content-block for intro section.
+			The results for the following sections can be found in <a href="#fig-4">Figure 4</a>.
 		</div>
 	</div>
 	<!-- RESULTS END -->
@@ -460,7 +456,15 @@
 		</div>
 		<div class="main-content-block">
 			<h2>Conclusions + Limitations</h2>
-			Let's end with some discussion of the implications and limitations.
+				<p>All findings considered, we extend and critically analyze the prior work by Agia et al. <a href="#ref_1">[1]</a> for erratic failure detection for action-diffusion visuo-motor policies. We engineered a pipeline to test the existing STAC methodology in addition to our differential entropy and visual latent embedding failure detectors. The Wasserstein distance metric achieves comparable failure detection results to the other STAC sub-methods along TPR, TNR, and balanced accuracy, with the benefit of less hyperparameter tuning (MMD: TPR = 0.96, TNR = 1.00, BalAcc = 0.98; Wasserstein: TPR = 0.96, TNR = 0.96 and BalAcc = 0.96 for the ID dataset with cumulative-episode scoring). The differential entropy failure detectors (KNN: TPR = 0.93, TNR = 0.88, BalAcc = 0.90; KDE: TPR = 0.93, TNR = 0.88, BalAcc = 0.90 for OOD (0.5-1.0) dataset with cumulative-episode scoring) outperform the diffusion variance baseline but do not compete with the STAC baselines. We also show that the visual latent embeddings can achieve high TPR and TNR (TPR = 0.98, TNR = 1.00, BalAcc = 0.99 for OOD (0.5-1.0) dataset) when using the Mahalanobis distance for scoring embeddings in comparison to the calibration dataset, finding that the Mahalanobis distance is much more stable than cosine similarity (similar result to Agia et al. <a href="#ref_1">[1]</a>). Moreover, we find that cumulative calibration/scoring is designed in a way to be biased towards later detection times. This work presents a new blind detector heuristic to ground the performance of cumulative calibration and makes recommendations for future dataset curation.</p>
+				<p>Given more time and resources, we would address the following limitations:</p>
+				<ul>
+					<li><strong>Environments</strong> - This project only tested the 2D planar pushing Push-T task for evaluating the presented failure detectors. This work could be strengthened by testing more environments with higher-dimensional action spaces (joint position, end-effector pose, etc.) in both simulation and real-world deployment. Given more time and resources, we would also introduce different types of domain randomization techniques beyond the sizing of the "T" block, including light flickering and color changes.</li>
+					<li><strong>Calibration Techniques</strong> - The cumulative episode calibration and i.i.d. scoring represent two extremes when it comes to flagging failures. The i.i.d. timesteps calibration will raise a failure flag whenever a rollout planning timestep exceeds the threshold (which may lead to spurious detections and FP detections) while the cumulative scoring relies on more precise flags at the expense of detection time latency. With further time, we'd like to test a middle-ground modification of the i.i.d. timestep approach where an episode is flagged as a failure if \(m\) of the past \(n\) where \(m&lt;n\) scores exceed the calibrated threshold. We believe this approach would be more robust to noisy scores.</li>
+					<li><strong>Hyperparameter Tuning</strong> - Many of the detectors, including the differential entropy methods, are sensitive to hyperparameter selections. We would do a more in-depth analysis of varied hyperparameter choices for the entropy failure detectors to isolate why they are less performant than the STAC baselines.</li>
+					<li><strong>Ensemble Scoring</strong> - One score aggregation technique we'd explore in the near future is ensemble score aggregation, in which we'd combine separate failure detector scores to create new scores. For this to be valuable, we'd also analyze the failure modes of each failure detector and reason about how two failure detectors could successfully complement each other. Sentinel pairs the STAC detector with a parallel VLM calling function as another failure detector (but the VLMs are usually queried via API calls and are unfeasible for real-time deployment).</li>
+					<li><strong>More OOD Detection Methods</strong> - STAC and differential entropy are detectors that base their scores on the trajectory outputs of a calibration dataset and rely on batch sampling to compute scores over a trajectory distribution. We would like to explore further OOD detection methods, including those that are calibrated directly by the training data for action-diffusion models. Such a setup is especially valuable in real-world settings since collecting expert demonstrations or rollouts are expensive. Initial research has pointed us to explore methods based on computing diffusion losses (e.g., Diff-DAgger by Lee et al. <a href="#ref_8">[8]</a> has been shown to handle OOD detection very well in highly expressive generative robot policies).</li>
+				</ul>
 		</div>
 		<div class="margin-right-block">
 		</div>
