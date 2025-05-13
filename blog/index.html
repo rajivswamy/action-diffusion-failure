@@ -1,376 +1,505 @@
 <html>
+
 <head>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
-<link rel="shortcut icon" href="images/icon.ico">
-<style type="text/css">
-	body {
-		background-color: #f5f9ff;
-	}
+	<link rel="shortcut icon" href="images/icon.ico">
+	<style type="text/css">
+		body {
+			background-color: #f5f9ff;
+		}
 
-	/* Hide both math displays initially, will display based on JS detection */
-  .mathjax-mobile, .mathml-non-mobile { display: none; }
+		/* Hide both math displays initially, will display based on JS detection */
+		.mathjax-mobile,
+		.mathml-non-mobile {
+			display: none;
+		}
 
-  /* Show the MathML content by default on non-mobile devices */
-  .show-mathml .mathml-non-mobile { display: block; }
-  .show-mathjax .mathjax-mobile { display: block; }
+		/* Show the MathML content by default on non-mobile devices */
+		.show-mathml .mathml-non-mobile {
+			display: block;
+		}
 
-	.content-margin-container {
-		display: flex;
-		width: 100%; /* Ensure the container is full width */
-		justify-content: left; /* Horizontally centers the children in the container */
-		align-items: center;  /* Vertically centers the children in the container */
-	}
-	.main-content-block {
-		width: 70%; /* Change this percentage as needed */
-    max-width: 1100px; /* Optional: Maximum width */
-		background-color: #fff;
-		border-left: 1px solid #DDD;
-		border-right: 1px solid #DDD;
-		padding: 8px 8px 8px 8px;
-		font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;#"Avenir";
-	}
-	.margin-left-block {
+		.show-mathjax .mathjax-mobile {
+			display: block;
+		}
+
+		.content-margin-container {
+			display: flex;
+			width: 100%;
+			/* Ensure the container is full width */
+			justify-content: left;
+			/* Horizontally centers the children in the container */
+			align-items: center;
+			/* Vertically centers the children in the container */
+		}
+
+		.main-content-block {
+			width: 70%;
+			/* Change this percentage as needed */
+			max-width: 1100px;
+			/* Optional: Maximum width */
+			background-color: #fff;
+			border-left: 1px solid #DDD;
+			border-right: 1px solid #DDD;
+			padding: 8px 8px 8px 8px;
+			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+			#"Avenir";
+		}
+
+		.margin-left-block {
 			font-size: 14px;
-			width: 15%; /* Change this percentage as needed */
-			max-width: 130px; /* Optional: Maximum width */
+			width: 15%;
+			/* Change this percentage as needed */
+			max-width: 130px;
+			/* Optional: Maximum width */
 			position: relative;
 			margin-left: 10px;
 			text-align: left;
-			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;#"Avenir";
+			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+			#"Avenir";
 			padding: 5px;
-	}
-	.margin-right-block {
-			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;#"Avenir";
+		}
+
+		.margin-right-block {
+			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+			#"Avenir";
 			font-size: 14px;
-			width: 25%; /* Change this percentage as needed */
-			max-width: 256px; /* Optional: Maximum width */
+			width: 25%;
+			/* Change this percentage as needed */
+			max-width: 256px;
+			/* Optional: Maximum width */
 			position: relative;
 			text-align: left;
-			padding: 10px;  /* Optional: Adds padding inside the caption */
-	}
+			padding: 10px;
+			/* Optional: Adds padding inside the caption */
+		}
 
-	img {
-			max-width: 100%; /* Make sure it fits inside the container */
+		img {
+			max-width: 100%;
+			/* Make sure it fits inside the container */
 			height: auto;
 			display: block;
 			margin: auto;
-	}
-	.my-video {
-			max-width: 100%; /* Make sure it fits inside the container */
+		}
+
+		.my-video {
+			max-width: 100%;
+			/* Make sure it fits inside the container */
 			height: auto;
 			display: block;
 			margin: auto;
-	}
-	/* Hide both video displays initially, will display based on JS detection */
-  .vid-mobile, .vid-non-mobile { display: none; }
+		}
 
-  /* Show the video content by default on non-mobile devices */
-  .show-vid-mobile .vid-mobile { display: block; }
-  .show-vid-non-mobile .vid-non-mobile { display: block; }
+		/* Hide both video displays initially, will display based on JS detection */
+		.vid-mobile,
+		.vid-non-mobile {
+			display: none;
+		}
 
-	a:link,a:visited
-	{
-		color: #0e7862; /*#1367a7;*/
-		text-decoration: none;
-	}
-	a:hover {
-		color: #24b597; /*#208799;*/
-	}
+		/* Show the video content by default on non-mobile devices */
+		.show-vid-mobile .vid-mobile {
+			display: block;
+		}
 
-	h1 {
-		font-size: 18px;
-		margin-top: 4px;
-		margin-bottom: 10px;
-	}
+		.show-vid-non-mobile .vid-non-mobile {
+			display: block;
+		}
 
-	table.header {
-    font-weight: 300;
-    font-size: 17px;
-    flex-grow: 1;
-		width: 70%;
-    max-width: calc(100% - 290px); /* Adjust according to the width of .paper-code-tab */
-	}
-	table td, table td * {
-	    vertical-align: middle;
-	    position: relative;
-	}
-	table.paper-code-tab {
-	    flex-shrink: 0;
-	    margin-left: 8px;
-	    margin-top: 8px;
-	    padding: 0px 0px 0px 8px;
-	    width: 290px;
-	    height: 150px;
-	}
+		a:link,
+		a:visited {
+			color: #0e7862;
+			/*#1367a7;*/
+			text-decoration: none;
+		}
 
-	.layered-paper { /* modified from: http://css-tricks.com/snippets/css/layered-paper/ */
-		box-shadow:
-		        0px 0px 1px 1px rgba(0,0,0,0.35), /* The top layer shadow */
-		        5px 5px 0 0px #fff, /* The second layer */
-		        5px 5px 1px 1px rgba(0,0,0,0.35), /* The second layer shadow */
-		        10px 10px 0 0px #fff, /* The third layer */
-		        10px 10px 1px 1px rgba(0,0,0,0.35); /* The third layer shadow */
-		margin-top: 5px;
-		margin-left: 10px;
-		margin-right: 30px;
-		margin-bottom: 5px;
-	}
+		a:hover {
+			color: #24b597;
+			/*#208799;*/
+		}
 
-	hr {
-    height: 1px; /* Sets the height of the line to 1 pixel */
-    border: none; /* Removes the default border */
-    background-color: #DDD; /* Sets the line color to black */
-  }
+		h1 {
+			font-size: 18px;
+			margin-top: 4px;
+			margin-bottom: 10px;
+		}
 
-	div.hypothesis {
-		width: 80%;
-		background-color: #EEE;
-		border: 1px solid black;
-		border-radius: 10px;
-		-moz-border-radius: 10px;
-		-webkit-border-radius: 10px;
-		font-family: Courier;
-		font-size: 18px;
-		text-align: center;
-		margin: auto;
-		padding: 16px 16px 16px 16px;
-	}
+		table.header {
+			font-weight: 300;
+			font-size: 17px;
+			flex-grow: 1;
+			width: 70%;
+			max-width: calc(100% - 290px);
+			/* Adjust according to the width of .paper-code-tab */
+		}
 
-	div.citation {
-    font-size: 0.8em;
-    background-color:#fff;
-    padding: 10px;
-		height: 200px;
-  }
-
-	.fade-in-inline {
-		position: absolute;
-		text-align: center;
-		margin: auto;
-		-webkit-mask-image: linear-gradient(to right,
-																			transparent 0%,
-																			transparent 40%,
-																			black 50%,
-																			black 90%,
-																			transparent 100%);
-		mask-image: linear-gradient(to right,
-																transparent 0%,
-																transparent 40%,
-																black 50%,
-																black 90%,
-																transparent 100%);
-		-webkit-mask-size: 8000% 100%;
-		mask-size: 8000% 100%;
-		animation-name: sweepMask;
-		animation-duration: 4s;
-		animation-iteration-count: infinite;
-		animation-timing-function: linear;
-		animation-delay: -1s;
-	}
-
-	.fade-in2-inline {
-			animation-delay: 1s;
-	}
-
-	.inline-div {
+		table td,
+		table td * {
+			vertical-align: middle;
 			position: relative;
-	    display: inline-block; /* Makes both the div and paragraph inline-block elements */
-	    vertical-align: top; /* Aligns them at the top, you can adjust this to middle, bottom, etc., based on your needs */
-	    width: 50px; /* Optional: Adds space between the div and the paragraph */
-	}
+		}
 
-</style>
+		table.paper-code-tab {
+			flex-shrink: 0;
+			margin-left: 8px;
+			margin-top: 8px;
+			padding: 0px 0px 0px 8px;
+			width: 290px;
+			height: 150px;
+		}
 
-	  <title>Failure Detection for Diffusion Visuomotor Policies</title>
-      <meta property="og:title" content="Failure Detection for Diffusion Visuomotor Policies" />
-			<meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-      <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+		.layered-paper {
+			/* modified from: http://css-tricks.com/snippets/css/layered-paper/ */
+			box-shadow:
+				0px 0px 1px 1px rgba(0, 0, 0, 0.35),
+				/* The top layer shadow */
+				5px 5px 0 0px #fff,
+				/* The second layer */
+				5px 5px 1px 1px rgba(0, 0, 0, 0.35),
+				/* The second layer shadow */
+				10px 10px 0 0px #fff,
+				/* The third layer */
+				10px 10px 1px 1px rgba(0, 0, 0, 0.35);
+			/* The third layer shadow */
+			margin-top: 5px;
+			margin-left: 10px;
+			margin-right: 30px;
+			margin-bottom: 5px;
+		}
+
+		hr {
+			height: 1px;
+			/* Sets the height of the line to 1 pixel */
+			border: none;
+			/* Removes the default border */
+			background-color: #DDD;
+			/* Sets the line color to black */
+		}
+
+		div.hypothesis {
+			width: 80%;
+			background-color: #EEE;
+			border: 1px solid black;
+			border-radius: 10px;
+			-moz-border-radius: 10px;
+			-webkit-border-radius: 10px;
+			font-family: Courier;
+			font-size: 18px;
+			text-align: center;
+			margin: auto;
+			padding: 16px 16px 16px 16px;
+		}
+
+		div.citation {
+			font-size: 0.8em;
+			background-color: #fff;
+			padding: 10px;
+			height: 200px;
+		}
+
+		.fade-in-inline {
+			position: absolute;
+			text-align: center;
+			margin: auto;
+			-webkit-mask-image: linear-gradient(to right,
+					transparent 0%,
+					transparent 40%,
+					black 50%,
+					black 90%,
+					transparent 100%);
+			mask-image: linear-gradient(to right,
+					transparent 0%,
+					transparent 40%,
+					black 50%,
+					black 90%,
+					transparent 100%);
+			-webkit-mask-size: 8000% 100%;
+			mask-size: 8000% 100%;
+			animation-name: sweepMask;
+			animation-duration: 4s;
+			animation-iteration-count: infinite;
+			animation-timing-function: linear;
+			animation-delay: -1s;
+		}
+
+		.fade-in2-inline {
+			animation-delay: 1s;
+		}
+
+		.inline-div {
+			position: relative;
+			display: inline-block;
+			/* Makes both the div and paragraph inline-block elements */
+			vertical-align: top;
+			/* Aligns them at the top, you can adjust this to middle, bottom, etc., based on your needs */
+			width: 50px;
+			/* Optional: Adds space between the div and the paragraph */
+		}
+	</style>
+
+	<title>Failure Detection for Diffusion Visuomotor Policies</title>
+	<meta property="og:title" content="Failure Detection for Diffusion Visuomotor Policies" />
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+	<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 
-  <body>
+<body>
 
-		<div class="content-margin-container">
-				<div class="margin-left-block">
-				</div>
-		    <div class="main-content-block">
-						<table class="header" align=left>
-								<tr>
-									<td colspan=4>
-										<span style="font-size: 32px; font-family: 'Courier New', Courier, monospace; /* Adds fallbacks */">Improving Failure Detection for Diffusion Visuomotor Policies via Push-T Simulation</span>
-									</td>
-								</tr>
-								<tr>
-										<td align=left>
-												<span style="font-size:17px"><a href="index.html">Rajiv Swamy</a></span>
-										</td>
-										<td align=left>
-												<span style="font-size:17px"><a href="index.html">Jayson Lin</a></span>
-										</td>
-								<tr>
-									<td colspan=4 align=left><span style="font-size:18px">Final project for 6.8300, MIT</span></td>
-								</tr>
-						</table>
-					</div>
-					<div class="margin-right-block">
-					</div>
+	<div class="content-margin-container">
+		<div class="margin-left-block">
 		</div>
-
-		<div class="content-margin-container" id="intro">
-				<div class="margin-left-block">
-          <!-- table of contents here -->
-          <div style="position:fixed; max-width:inherit; top:max(20%,120px)">
-              <b style="font-size:16px">Outline</b><br><br>
-              <a href="#intro">Introduction / Motivation</a><br><br>
-              <a href="#background">Background</a><br><br>
-              <a href="#methods">Methods</a><br><br>
-              <a href="#results">Results</a><br><br>
-              <a href="#implications_and_limitations">Implications and limitations</a><br><br>
-          </div>
-				</div>
-		    <div class="main-content-block">
-            <!--You can embed an image like this:-->
-            <img src="./images/failure_detection_main_image.png" width=1024px/>
-		    </div>
-		    <div class="margin-right-block">
-						Visuomotor policies in real world Push-T tests.
-		    </div>
+		<div class="main-content-block">
+			<table class="header" align=left>
+				<tr>
+					<td colspan=4>
+						<span
+							style="font-size: 32px; font-family: 'Courier New', Courier, monospace; /* Adds fallbacks */">Improving
+							Failure Detection for Diffusion Visuomotor Policies via Push-T Simulation</span>
+					</td>
+				</tr>
+				<tr>
+					<td align=left>
+						<span style="font-size:17px"><a href="index.html">Rajiv Swamy</a></span>
+					</td>
+					<td align=left>
+						<span style="font-size:17px"><a href="index.html">Jayson Lin</a></span>
+					</td>
+				<tr>
+					<td colspan=4 align=left><span style="font-size:18px">Final project for 6.8300, MIT</span></td>
+				</tr>
+			</table>
 		</div>
-
-		<!-- INTRODUCTION -->
-    	<div class="content-margin-container" id="intro">
-				<div class="margin-left-block">
-				</div>
-		    <div class="main-content-block">
-						<h1>Introduction</h1>
-            Motivate your project. What question are you asking. Why is it unanswered so far? What gap in the literature or practice are you filling?
-            Why is it important?$$ \sum_{i=0}^{n} i = \frac{n(n+1)}{2} $$.
-		    </div>
-		    <div class="margin-right-block">
-						Margin note that clarifies some detail #main-content-block for intro section.
-		    </div>
+		<div class="margin-right-block">
 		</div>
-		<!-- INTRODUCTION END -->
+	</div>
 
-		<!-- BACKGROUND -->
-		<div class="content-margin-container" id="background">
-				<div class="margin-left-block">
-				</div>
-		    <div class="main-content-block">
-					<h1>Background</h1>
-				  It is well known that Y does Y. And this has raised the question does X do Y? Because if Y does Y then it stands to reason that X does Y.
-          But we cannot answer this until we realize the Z implies Y and X can be linked to Z.<br><br>
-
-          Now let's write some math!<br>
-          <center>
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-              <mrow>
-                <mrow>
-                  <mo>&#x2202;</mo>
-                  <mi>y</mi>
-                </mrow>
-                <mo>/</mo>
-                <mrow>
-                  <mo>&#x2202;</mo>
-                  <mi>x</mi>
-                </mrow>
-              </mrow>
-              <mo>=</mo>
-              <mi>x</mi>
-            </math>
-          </center>
-          <br>
-          It's probably best to ask an LLM to help do the web
-          formatting for math. You can tell it "convert this latex equation into MathML: $$\frac{\partial dy}{\partial dx} = x$$"
-          But it took me a few tries. So, if you get frustrated, you can embed an image of the equation, or use other packages for
-          rendering equations on webpages.
-		    </div>
-		    <div class="margin-right-block" style="transform: translate(0%, -100%);"> <!-- you can move the margin notes up and down with translate -->
-          Interestingly, Plato also asked if X does Y, in <a href="#ref_1">[1]</a>.
-		    </div>
+	<div class="content-margin-container" id="intro">
+		<div class="margin-left-block">
+			<!-- table of contents here -->
+			<div style="position:fixed; max-width:inherit; top:max(20%,120px)">
+				<b style="font-size:16px">Outline</b><br><br>
+				<a href="#intro">Introduction and Motivation</a><br><br>
+				<a href="#background">Background</a><br><br>
+				<a href="#methods">Methods + Experiments</a><br><br>
+				<a href="#results">Results + Analysis</a><br><br>
+				<a href="#implications_and_limitations">Conclusions + Limitations</a><br><br>
+			</div>
 		</div>
-
-		<div class="content-margin-container">
-				<div class="margin-left-block">
-				</div>
-		    <div class="main-content-block">
-            <h1>Another section</h1>
-            In this section we embed a video:
-						<video class='my-video' loop autoplay muted style="width: 725px">
-								<source src="./images/mtsh.mp4" type="video/mp4">
-						</video>
-		    </div>
-		    <div class="margin-right-block">
-					A caption for the video could go here.
-		    </div>
+		<div class="main-content-block">
+			<!--You can embed an image like this:-->
+			<img src="./images/failure_detection_main_image.png" width=1024px />
 		</div>
-
-		<!-- METHODS -->
-		<div class="content-margin-container" id="methods">
-				<div class="margin-left-block">
-				</div>
-		    <div class="main-content-block">
-						<h1>Methods</h1>
-            Motivate your project. What question are you asking. Why is it unanswered so far? What gap in the literature or practice are you filling?
-            Why is it important?$$ \sum_{i=0}^{n} i = \frac{n(n+1)}{2} $$.
-		    </div>
-		    <div class="margin-right-block">
-						Margin note that clarifies some detail #main-content-block for intro section.
-		    </div>
+		<div class="margin-right-block">
+			<b>Visuomotor policies in real world Push-T tests:</b> We conduct our experiments using the simulation
+			environment Push-T, which aids in deploying policies in real world Push-T tests.
 		</div>
-		<!-- METHODS END -->
+	</div>
 
-		<!-- RESULTS -->
-		<div class="content-margin-container" id="results">
-				<div class="margin-left-block">
-				</div>
-		    <div class="main-content-block">
-						<h1>Results</h1>
-            Motivate your project. What question are you asking. Why is it unanswered so far? What gap in the literature or practice are you filling?
-            Why is it important?$$ \sum_{i=0}^{n} i = \frac{n(n+1)}{2} $$.
-		    </div>
-		    <div class="margin-right-block">
-						Margin note that clarifies some detail #main-content-block for intro section.
-		    </div>
+	<!-- INTRODUCTION -->
+	<div class="content-margin-container" id="intro">
+		<div class="margin-left-block">
 		</div>
-		<!-- RESULTS END -->
-
-		<!-- IMPLICATIONS AND LIMITATIONS -->
-		<div class="content-margin-container" id="implications_and_limitations">
-				<div class="margin-left-block">
-				</div>
-		    <div class="main-content-block">
-						<h1>Implications and limitations</h1>
-						Let's end with some discussion of the implications and limitations.
-		    </div>
-		    <div class="margin-right-block">
-		    </div>
+		<div class="main-content-block">
+			<h2>Introduction and Motivation</h2>
+			Motivate your project. What question are you asking. Why is it unanswered so far? What gap in the literature
+			or practice are you filling?
+			Why is it important?$$ \sum_{i=0}^{n} i = \frac{n(n+1)}{2} $$.
 		</div>
-		<!-- IMPLICATIONS AND LIMITATIONS END -->
+		<div class="margin-right-block">
+			Margin note that clarifies some detail #main-content-block for intro section.
+		</div>
+	</div>
+	<!-- INTRODUCTION END -->
 
-		<!-- CITATIONS -->
-		<div class="content-margin-container" id="citations">
-				<div class="margin-left-block">
-				</div>
-		    <div class="main-content-block">
-						<div class='citation' id="references" style="height:auto"><br>
-							<span style="font-size:16px">References:</span><br><br>
-							<a id="ref_1"></a>[1] <a href="https://arxiv.org/abs/2410.04640">Unpacking Failure Modes of Generative Policies: Runtime Monitoring of Consistency and Progress</a>, Agia et al., 2024<br><br>
-							<a id="ref_2"></a>[3] <a href="https://arxiv.org/abs/2503.08558">Can We Detect Failures Without Failure Data? Uncertainty-Aware Runtime Failure Detection for Imitation Learning Policies</a>, Xu et al., 2025<br><br>
-							<a id="ref_3"></a>[4] <a href="https://arxiv.org/abs/2410.05063">Control-oriented Clustering of Visual Latent Representation</a>, Qi et al., 2025<br><br>
-							<a id="ref_4"></a>[5] <a href="https://arxiv.org/abs/2410.14868">Diff-DAgger: Uncertainty Estimation with Diffusion Policy for Robotic Manipulation</a>, Lee et al., 2025<br><br>
-							<a id="ref_5"></a>[6] <a href="https://arxiv.org/abs/2205.09991">Planning with Diffusion for Flexible Behavior Synthesis</a>, Janner et al., 2025<br><br>
+	<!-- BACKGROUND -->
+	<div class="content-margin-container" id="background">
+		<div class="margin-left-block">
+		</div>
+		<div class="main-content-block">
+			<h2>Background</h2>
+			<h1>Generative Robot-Learning</h1>
+            <h1>Problem Statement</h1>
+            <h1>STAC Method</h1>
+            <h1>Entropy-Based Failure Detection</h1>
+            <h1>Visual Latent Embeddings</h1>
+
+			Now let's write some math!<br>
+			<center>
+				<math xmlns="http://www.w3.org/1998/Math/MathML">
+					<mrow>
+						<mrow>
+							<mo>&#x2202;</mo>
+							<mi>y</mi>
+						</mrow>
+						<mo>/</mo>
+						<mrow>
+							<mo>&#x2202;</mo>
+							<mi>x</mi>
+						</mrow>
+					</mrow>
+					<mo>=</mo>
+					<mi>x</mi>
+				</math>
+			</center>
+			<br>
+			It's probably best to ask an LLM to help do the web
+			formatting for math. You can tell it "convert this latex equation into MathML: $$\frac{\partial dy}{\partial
+			dx} = x$$"
+			But it took me a few tries. So, if you get frustrated, you can embed an image of the equation, or use other
+			packages for
+			rendering equations on webpages.
+		</div>
+		<div class="margin-right-block" style="transform: translate(0%, -100%);">
+			<!-- you can move the margin notes up and down with translate -->
+			Interestingly, Plato also asked if X does Y, in <a href="#ref_1">[1]</a>.
+		</div>
+	</div>
+
+	<div class="content-margin-container">
+		<div class="margin-left-block">
+		</div>
+		<div class="main-content-block">
+			<h1>Another section</h1>
+			In this section we embed a video:
+			<video class='my-video' loop autoplay muted style="width: 725px">
+				<source src="./images/mtsh.mp4" type="video/mp4">
+			</video>
+		</div>
+		<div class="margin-right-block">
+			A caption for the video could go here.
+		</div>
+	</div>
+
+	<!-- METHODS -->
+	<div class="content-margin-container" id="methods">
+		<div class="margin-left-block">
+		</div>
+		<div class="main-content-block">
+			<h2>Methods + Experiments</h2>
+				<h1>Environment + Model</h1>
+				<h1>Data Collection, Domain Randomization</h1>
+				<img src="./images/[Table]baseline_scores.png" width=800px />
+					<p style="text-align: center"><b>Figure 1. Table of Generated Datasets:</b> The table shows the performances
+						of the baseline diffusion policy on the 5 datasets generated. The calibration dataset's successes are
+						used to find a failure threshold. The validation set is an in-distribution dataset, while the remaining
+						datasets are out-of-distribution due to varying degrees of scaling the Push-T's T object size.</p>
+				<h1>Failure Detection Methodology</h1>
+				<h1>Metrics</h1>
+		</div>
+		<div class="margin-right-block">
+			Margin note that clarifies some detail #main-content-block for intro section.
+		</div>
+	</div>
+	<!-- METHODS END -->
+
+	<!-- RESULTS -->
+	<div class="content-margin-container" id="results">
+		<div class="margin-left-block">
+		</div>
+		<div class="main-content-block">
+			<h2>Results + Analysis</h2>
+				<h3>Dataset Analysis</h3>
+					<div style="display: flex; justify-content: space-around; align-items: flex-start; gap: 15px;">
+						<div style="text-align: center;">
+							<video class='my-video' loop autoplay muted style="width: 230px">
+									<source src="./images/vis_success.mp4" type="video/mp4">
+							</video>
+							<p style="font-style: italic; margin-top: 5px;">Successful Trajectory</p>
 						</div>
-		    </div>
-		    <div class="margin-right-block">
-            <!-- margin notes for reference block here -->
-		    </div>
+						<div style="text-align: center;">
+							<video class='my-video' loop autoplay muted style="width: 230px">
+									<source src="./images/vis_failure.mp4" type="video/mp4">
+							</video>
+							<p style="font-style: italic; margin-top: 5px;">Failure Trajectory</p>
+						</div>
+						<div style="text-align: center;">
+							<video class='my-video' loop autoplay muted style="width: 230px">
+									<source src="./images/vis_multi_mod.mp4" type="video/mp4">
+							</video>
+							<p style="font-style: italic; margin-top: 5px;">Multi-Modal Trajectory</p>
+						</div>
+					</div>
+					<p style="text-align: center"><b>Figure 2. Example Trajectories in Push-T Simulation:</b> These are example trajectories for how the Push-T simulation works. Observe that the point on the screen acts as the end-effector of a robotic arm which pushes the T-shaped object to the green-shaded T target. The first video shows a successful trajectory, the second video shows a failure trajectory, and the third video shows a multi-modal trajectory at the start, where left and right trajectories are considered.</p>
+					<h4>Baseline Performances</h4>
+					<h4>Latent Representation Exploration</h4>
+					<div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+						<img src="./images/Latent Embedding Graph.png" style="width: 600px; margin: 0;" />
+						<img src="./images/Latent_embedding_explanation.png" style="width: 300px; margin: 0;" />
+					</div>
+					<p style="text-align: center"><b>Figure 1. Table of Generated Datasets:</b> The table shows the performances
+						of the baseline diffusion policy on the 5 datasets generated. The calibration dataset's successes are
+						used to find a failure threshold. The validation set is an in-distribution dataset, while the remaining
+						datasets are out-of-distribution due to varying degrees of scaling the Push-T's T object size.</p>
+				<h3>Failure Detector Results</h3>
+					<img src="./images/[Table]exp_results.png" width=1024px />
+					<p style="text-align: center"><b>Figure 3. Table of Experiment Results:</b> The table shows the failure detection performances
+						of the methods STAC, Embedding, Diffusion Variance, and Entropy with various corresponding error functions across two scoring mechanisms: Cumulative-Episode Scoring and I.I.D. Timestep Scoring. The method configurations are ran on the 4 types of generated datasets.</p>
+					<h4> STAC Method</h4>
+					<h4>Visual Latent Embeddings</h4>
+					<h4>Entropy-Based Failure Detection</h4>
+					<h4>Method Comparison: I.I.D. Timesteps Errors vs. I.I.D. Cumulative Episode Errors</h4>
+				<h3>Drawbacks of Sentinel</h3>
+					<h4>Cumulative Calibration and Scoring</h4>
+					<h4>Multi-Modal Trajectories</h4>
+			Motivate your project. What question are you asking. Why is it unanswered so far? What gap in the literature
+			or practice are you filling?
+			Why is it important?$$ \sum_{i=0}^{n} i = \frac{n(n+1)}{2} $$.
 		</div>
-		<!-- CITATIONS END -->
+		<div class="margin-right-block">
+			Margin note that clarifies some detail #main-content-block for intro section.
+		</div>
+	</div>
+	<!-- RESULTS END -->
 
-	</body>
+	<!-- IMPLICATIONS AND LIMITATIONS -->
+	<div class="content-margin-container" id="implications_and_limitations">
+		<div class="margin-left-block">
+		</div>
+		<div class="main-content-block">
+			<h2>Conclusions + Limitations</h2>
+			Let's end with some discussion of the implications and limitations.
+		</div>
+		<div class="margin-right-block">
+		</div>
+	</div>
+	<!-- IMPLICATIONS AND LIMITATIONS END -->
+
+	<!-- CITATIONS -->
+	<div class="content-margin-container" id="citations">
+		<div class="margin-left-block">
+		</div>
+		<div class="main-content-block">
+			<div class='citation' id="references" style="height:auto"><br>
+				<span style="font-size:16px">References:</span><br><br>
+				<a id="ref_1"></a>[1] <a href="https://arxiv.org/abs/2303.04137v4">Diffusion Policy: Visuomotor Policy
+					Learning via Action Diffusion</a>, Chi et al., 2023<br><br>
+				<a id="ref_2"></a>[2] <a href="https://arxiv.org/abs/2410.04640">Unpacking Failure Modes of Generative
+					Policies: Runtime Monitoring of Consistency and Progress</a>, Agia et al., 2024<br><br>
+				<a id="ref_3"></a>[3] <a href="https://arxiv.org/abs/2205.09991">Planning with Diffusion for Flexible
+					Behavior Synthesis</a>, Janner et al., 2025<br><br>
+				<a id="ref_4"></a>[4] <a href="https://arxiv.org/abs/2503.08558">Can We Detect Failures Without Failure
+					Data? Uncertainty-Aware Runtime Failure Detection for Imitation Learning Policies</a>, Xu et al.,
+				2025<br><br>
+				<a id="ref_5"></a>[5] <a href="https://arxiv.org/pdf/1908.05569">Entropic Out-of-Distribution
+					Detection</a>, Macêdo et al., 2021<br><br>
+				<a id="ref_6"></a>[6] <a
+					href="https://kuscholarworks.ku.edu/server/api/core/bitstreams/2305b1d0-d4d0-4618-bdb8-e4b4ea79daf4/content">Task-Oriented
+					Active Sensing via Action Entropy Minimization</a>, Greigarn et al., 2019<br><br>
+				<a id="ref_7"></a>[7] <a href="https://arxiv.org/abs/2410.05063">Control-oriented Clustering of Visual
+					Latent Representation</a>, Qi et al., 2025<br><br>
+				<a id="ref_8"></a>[8] <a href="https://arxiv.org/abs/2410.14868">Diff-DAgger: Uncertainty Estimation
+					with Diffusion Policy for Robotic Manipulation</a>, Lee et al., 2025<br><br>
+			</div>
+		</div>
+		<div class="margin-right-block">
+			<!-- margin notes for reference block here -->
+		</div>
+	</div>
+	<!-- CITATIONS END -->
+
+</body>
 
 </html>
